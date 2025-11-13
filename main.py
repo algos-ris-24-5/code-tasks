@@ -57,6 +57,7 @@ def lcm(a: int, b: int) -> int:
     :return: значение наименьшего общего кратного
     """
     if a*b==0:
+        
         return a+b
     return abs(a * b) // gcd_iterative_fast(a, b)
 
