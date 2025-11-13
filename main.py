@@ -9,7 +9,7 @@ def gcd_recursive(a: int, b: int) -> int:
     :param b: целое число b
     :return: значение наибольшего общего делителя
     """
-    pass
+    return 1   
 
 
 def gcd_iterative_slow(a: int, b: int) -> int:
