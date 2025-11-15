@@ -90,6 +90,8 @@ def main():
     print(lcm(a, b))
     print(f"Продолжительность: {time.time() - start_time} сек")
 
+    "Проверка Git"
+
 
 if __name__ == "__main__":
     main()
