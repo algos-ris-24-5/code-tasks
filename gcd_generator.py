@@ -62,27 +62,19 @@ class GcdGenerator:
 
     @property
     def gcd_value(self) -> int:
-        """Возвращает значение НОД для a_value и b_value"""
-        pass
+        return self.__values[COMMON_FACTORS]
 
     @property
     def a_value(self) -> int:
-        """Возвращает число, полученное в результате перемножения простых чисел,
-        возведенных в случайную степень. Число имеет как общие, так и различные
-        множители с числом b_value"""
-        pass
+        return self.__values[COMMON_FACTORS]*self.__values[A_ONLY_FACTORS]
 
     @property
     def b_value(self) -> int:
-        """Возвращает число, полученное в результате перемножения простых чисел,
-        возведенных в случайную степень. Число имеет как общие, так и различные
-        множители с числом a_value"""
-        pass
+        return self.__values[COMMON_FACTORS]*self.__values[B_ONLY_FACTORS]
 
     @property
     def lcm_value(self) -> int:
-        """Возвращает значение НОК для a_value и b_value"""
-        pass
+        return self.a_value*self.b_value//self.gcd_value
 
     @property
     def max_factor_cnt(self) -> int:
@@ -98,7 +90,34 @@ class GcdGenerator:
         умолчанию 5.
         :return: None
         """
-        pass
+        if factor_cnt > self.max_factor_cnt:
+            factor_cnt = self.max_factor_cnt
+
+        """выбираем случайный набор простых чисел"""
+        primes = random.sample(self.__primes, factor_cnt)
+
+        """опр сколько чисел будет в каждой группе"""
+        com_cnt = random.randint(1, max(1, factor_cnt - 2))
+        a_cnt = random.randint(1, max(1, factor_cnt - com_cnt - 1))
+        b_cnt = factor_cnt - com_cnt - a_cnt
+
+        """делим на 3 группы"""
+        com_primes = primes[:com_cnt]
+        a_primes = primes[com_cnt:com_cnt + a_cnt]
+        b_primes = primes[com_cnt + a_cnt:com_cnt + a_cnt + b_cnt]
+
+        """функция для перемножения чисел с ранд степенями"""
+        def multiply_primes(prime_list):
+            res = 1
+            for p in prime_list:
+                power = random.randint(1, max_pow)
+                res *= p ** power
+            return res
+
+        """записываем числа"""
+        self.__values[COMMON_FACTORS] = multiply_primes(com_primes)
+        self.__values[A_ONLY_FACTORS] = multiply_primes(a_primes)
+        self.__values[B_ONLY_FACTORS] = multiply_primes(b_primes)
 
 
 if __name__ == "__main__":
