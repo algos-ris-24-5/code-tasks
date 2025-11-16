@@ -64,7 +64,7 @@ def lcm(a: int, b: int) -> int:
     a, b = abs(a), abs(b)
     if a * b == 0:
         return 0 
-    return a // gcd_iterative_fast(a, b) * b
+    return (b * a) // gcd_iterative_fast(a, b)
 
 
 def main():
@@ -89,8 +89,6 @@ def main():
     start_time = time.time()
     print(lcm(a, b))
     print(f"Продолжительность: {time.time() - start_time} сек")
-
-    "Проверка Git"
 
 
 if __name__ == "__main__":
