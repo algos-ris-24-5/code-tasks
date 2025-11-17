@@ -82,6 +82,14 @@ class GcdGenerator:
         для генерации чисел"""
         return len(self.__primes)
 
+    """функция для перемножения чисел с ранд степенями"""
+    def __multiply_primes(self, prime_list, max_pow: int) -> int:
+        res = 1
+        for p in prime_list:
+            power = random.randint(1, max_pow)
+            res *= p ** power
+        return res
+
     def generate_values(self, factor_cnt: int = 5, max_pow: int = 5) -> None:
         """Процедура генерирует значения a_value, b_value, gcd_value и lcm_value.
         :param factor_cnt: Количество простых чисел, используемых для генерации,
@@ -106,18 +114,10 @@ class GcdGenerator:
         a_primes = primes[com_cnt:com_cnt + a_cnt]
         b_primes = primes[com_cnt + a_cnt:com_cnt + a_cnt + b_cnt]
 
-        """функция для перемножения чисел с ранд степенями"""
-        def multiply_primes(prime_list):
-            res = 1
-            for p in prime_list:
-                power = random.randint(1, max_pow)
-                res *= p ** power
-            return res
-
         """записываем числа"""
-        self.__values[COMMON_FACTORS] = multiply_primes(com_primes)
-        self.__values[A_ONLY_FACTORS] = multiply_primes(a_primes)
-        self.__values[B_ONLY_FACTORS] = multiply_primes(b_primes)
+        self.__values[COMMON_FACTORS] = self.__multiply_primes(com_primes, max_pow)
+        self.__values[A_ONLY_FACTORS] = self.__multiply_primes(a_primes, max_pow)
+        self.__values[B_ONLY_FACTORS] = self.__multiply_primes(b_primes, max_pow)
 
 
 if __name__ == "__main__":
