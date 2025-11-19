@@ -36,7 +36,7 @@ def lcm(a, b):
     # Для избежания переполнения сначала делим a на НОД
     return a // gcd_iterative_fast(a, b) * b
 
-if name == "main":
+if __name__ == "__main__":
     print("Введите 2 числа через enter")
     num1 = int(input())
     num2 = int(input())
