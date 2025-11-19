@@ -12,6 +12,7 @@ def gcd_recursive(a: int, b: int) -> int:
     a = abs(a)
     b=abs(b)
     if b==0: return a
+    if a==0: return b
     return gcd_recursive(b,a%b)
 
 
@@ -25,6 +26,8 @@ def gcd_iterative_slow(a: int, b: int) -> int:
     """
     a = abs(a)
     b=abs(b)
+    if b==0: return a
+    if a==0: return b
     while a!=b:
         if a>b: a-=b
         else: b-=a
@@ -41,6 +44,8 @@ def gcd_iterative_fast(a: int, b: int) -> int:
     """
     a = abs(a)
     b=abs(b)
+    if b==0: return a
+    if a==0: return b
     temp = 0
     while a!=0:
         temp = b%a
@@ -56,6 +61,8 @@ def lcm(a: int, b: int) -> int:
     :param b: натуральное число b
     :return: значение наименьшего общего кратного
     """
+    if b==0: return a
+    if a==0: return b
     return int(a*b/gcd_iterative_fast(a,b))
 
 
