@@ -1,14 +1,12 @@
 def gcd_recursive (a,b):
-    # База
+    a, b = abs(a), abs(b)
     if b == 0:
         return a
-    # Рекурсивно вызываем функцию с аргументами b и остатком от деления a на b
     return gcd_recursive(b, a % b)
 
 def gcd_iterative_slow(a,b):
-    # Заглушка
+    a, b = abs(a), abs(b)
     while a != 0 and b != 0:
-        # Вычитаем из большего числа меньшее
         if a > b:
             a = a - b
         else:
@@ -20,20 +18,14 @@ def gcd_iterative_slow(a,b):
     return x
 
 def gcd_iterative_fast(a, b):
-       # Заглушка5
-        while b!=0:
-
-        # Сохраняем текущее значение b
-            temp = b
-            # Обновляем b как остаток от деления a на b
-            b = a % b
-            # Обновляем a как предыдущее значение b
-            a = temp
-        return a
+    a, b = abs(a), abs(b)
+    while b!=0:
+        temp = b
+        b = a % b
+        a = temp
+    return a
 
 def lcm(a, b):
-    # Используем формулу: НОК(a, b) = (a * b) / НОД(a, b)
-    # Для избежания переполнения сначала делим a на НОД
     return a // gcd_iterative_fast(a, b) * b
 
 if __name__ == "__main__":
