@@ -108,4 +108,8 @@ if __name__ == "__main__":
     print("Число a = %d" % generator.a_value)
     print("Число b = %d" % generator.b_value)
     print("НОД(a, b) = %d" % generator.gcd_value)
+<<<<<<< HEAD
     print("НОК(a, b) = %d" % generator.lcm_value)
+=======
+    print("НОК(a, b) = %d" % generator.lcm_value)
+>>>>>>> cdfb8a00730ee70268bab5e0b2d3a83e3a7e9f6b
