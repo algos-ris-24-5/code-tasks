@@ -85,8 +85,4 @@ class TestLcm(unittest.TestCase):
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     unittest.main()
-=======
-    unittest.main()
->>>>>>> cdfb8a00730ee70268bab5e0b2d3a83e3a7e9f6b
