@@ -3,25 +3,23 @@ def validate_matrix(matrix: list[list[int]]) -> None:
     :param matrix: матрица для проверки
     :raise Exception: если значение параметра не является целочисленной квадратной матрицей
     """
-    # 1. Проверка базовой структуры
+
     if not matrix or not isinstance(matrix, list):
         raise Exception("Матрица должна быть непустым списком")
-    
-    # 2. Проверка что все элементы - списки
+
     if not all(isinstance(row, list) for row in matrix):
         raise Exception("Матрица должна быть списком списков")
     
-    # 3. Проверка что матрица не пустая
     n = len(matrix)
     if n == 0:
         raise Exception("Матрица не может быть пустой")
     
-    # 4. Проверка квадратности
+
     for row in matrix:
         if len(row) != n:
             raise Exception("Матрица должна быть квадратной")
     
-    # 5. Проверка целочисленности элементов
+
     for row in matrix:
         if not all(isinstance(item, int) for item in row):
             raise Exception("Все элементы матрицы должны быть целыми числами")
