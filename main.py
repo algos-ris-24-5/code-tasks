@@ -6,8 +6,6 @@ def check_matrix(matrix):
     for i in matrix:
         if len(i)!=len(matrix):
             raise Exception("matrix is not square")
-        if isinstance(i,list):
-            raise Exception("matrix is not list of lists")
 
 def calculate_determinant(matrix: list[list[int]]) -> int:
     """Вычисляет определитель целочисленной квадратной матрицы
