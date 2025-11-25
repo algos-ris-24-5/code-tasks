@@ -1,3 +1,7 @@
+# Adding by team NEXUS
+get-pip.py
+*.cfg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
