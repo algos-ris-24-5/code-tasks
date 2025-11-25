@@ -73,23 +73,23 @@ def _get_reduced_matrix(
     return created_matrix
 
 
-def _get_tridiagonal_determinant(matrix: list[list[int]]) -> int:
+def _get_tridiagonal_determinant(a: int, b: int, c: int, size_matr: int) -> int:
     """
     Внутренняя функция вычисления определителя трехдиагональной целочисленной квадратной матрицы.
-    :param matrix: целочисленная трехдиагональная квадратная матрица.
+    :param a: элемент главной диагонали
+    :param b: элемент верхней диагонали
+    :param c: элемент нижней диагонали
 
     :return: значение определителя.
     """
-    if len(matrix) == 1:
-        return matrix[0][0]
-    if len(matrix) == 2:
-        return matrix[0][0] ** 2 - (matrix[0][1] * matrix[1][0])
+    if size_matr == 1:
+        return a
+    if size_matr == 2:
+        return a**2 - (b * c)
 
-    return matrix[0][0] * _get_tridiagonal_determinant(
-        _get_reduced_matrix(matrix, 0, 0)
-    ) - matrix[1][0] * matrix[0][1] * _get_tridiagonal_determinant(
-        _get_reduced_matrix(_get_reduced_matrix(matrix, 0, 0), 0, 0)
-    )
+    return a * _get_tridiagonal_determinant(
+        a, b, c, size_matr - 1
+    ) - b * c * _get_tridiagonal_determinant(a, b, c, size_matr - 2)
 
 
 def get_tridiagonal_determinant(matrix: list[list[int]]) -> int:
@@ -100,7 +100,14 @@ def get_tridiagonal_determinant(matrix: list[list[int]]) -> int:
     """
 
     _data_validation_tridiagonal_determinant(matrix)
-    return _get_tridiagonal_determinant(matrix)
+
+    if len(matrix) == 1:
+        return matrix[0][0]
+
+    main_diag = matrix[0][0]
+    upper_diag = matrix[0][1]
+    lower_diag = matrix[1][0]
+    return _get_tridiagonal_determinant(main_diag, upper_diag, lower_diag, len(matrix))
 
 
 def main():
