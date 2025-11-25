@@ -46,33 +46,6 @@ def _data_validation_tridiagonal_determinant(matrix: list[list[int]]) -> None:
         raise Exception("The diagonals contain non-coinciding values")
 
 
-def _get_reduced_matrix(
-    matrix: list[list[int]], row: int, column: int
-) -> list[list[int]]:
-    """
-    Функция для вычисления матрицы с вычеркнутым столбцом и строкой
-    :param matrix: целочисленная трехдиагональная квадратная матрица.
-    :param row: Вычеркиваемый ряд из исходной матрицы.
-    :param column: Вычеркиваемый столбец из исходной матрицы.
-
-    :return: Полученная матрица.
-    """
-
-    created_matrix: list[list[int]] = []
-    curi = -1
-    for i in range(len(matrix)):
-        if i == row:
-            continue
-        curi += 1
-        created_matrix.append([])
-        for j in range(len(matrix)):
-            if j == column:
-                continue
-            created_matrix[curi].append(matrix[i][j])
-
-    return created_matrix
-
-
 def _get_tridiagonal_determinant(a: int, b: int, c: int, size_matr: int) -> int:
     """
     Внутренняя функция вычисления определителя трехдиагональной целочисленной квадратной матрицы.
