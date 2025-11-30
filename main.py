@@ -8,6 +8,7 @@ def fibonacci_rec(n: int) -> int:
     :param n: порядковый номер числа Фибоначчи
     :return: число Фибоначчи
     """
+    #TEST
     pass
 
 
