@@ -8,8 +8,11 @@ def fibonacci_rec(n: int) -> int:
     :param n: порядковый номер числа Фибоначчи
     :return: число Фибоначчи
     """
-    
-    pass
+    if n <= 0:
+        return 0
+    if n == 1:
+        return 1
+    return fibonacci_rec(n - 1) + fibonacci_rec(n - 2)
 
 
 def fibonacci_iter(n: int) -> int:
@@ -19,7 +22,17 @@ def fibonacci_iter(n: int) -> int:
     :param n: порядковый номер числа Фибоначчи
     :return: число Фибоначчи
     """
-    pass
+
+    if n <= 0:
+        return 0
+    if n == 1:
+        return 1
+    array = [0] * (n + 1)
+    array[1] = 1
+    for i in range(2, n + 1):
+        array[i] = array[i - 1] + array[i - 2]
+
+    return array[n]
 
 
 def fibonacci(n: int) -> int:
@@ -28,7 +41,16 @@ def fibonacci(n: int) -> int:
     :param n: порядковый номер числа Фибоначчи
     :return: число Фибоначчи
     """
-    pass
+
+    if n <= 0:
+        return 0
+    if n == 1:
+        return 1
+    a, b = 0, 1
+    for _ in range(2, n + 1):
+        a, b = b, a + b
+
+    return b
 
 
 def main():
@@ -40,7 +62,7 @@ def main():
     print(fibonacci_iter(n))
 
     print(f"\nВычисление {n} числа Фибоначчи итеративно без использования массива:")
-    print(fibonacci_iter(n))
+    print(fibonacci(n)) # Здесь изначально стоял второй вызов обычной итеративной функции
 
 
 if __name__ == "__main__":
