@@ -48,6 +48,9 @@ def get_min_cost_path(
     return Result(min_cost[rows][cols], path)
 
 def _build_path(prev_cells, rows, cols):
+    if rows == 1 and cols == 1:
+        return [(0, 0)]
+        
     if prev_cells[rows][cols] is None:
         return None
 
