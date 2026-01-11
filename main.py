@@ -10,6 +10,15 @@ NEGATIVE_VALUE_TEMPL = "Параметр {0} отрицательный"
 N_LESS_THAN_K_ERROR_MSG = "Параметр n меньше чем k"
 """Сообщение об ошибке при значении параметра n меньше чем k"""
 
+def generation_booles(length: int) -> list[str]:
+    if length == 0: return []
+    if length == 1: return ['0']
+    return [s + '0' for s in generation_ones(length - 1)]
+
+def generation_ones(length: int) -> list[str]:
+    if length == 0: return []
+    if length == 1: return ['1']
+    return [s + '1' for s in generation_booles(length - 1) + generation_ones(length - 1)]
 
 def generate_strings(length: int) -> list[str]:
     """Возвращает строки заданной длины, состоящие из 0 и 1, где никакие
@@ -20,7 +29,10 @@ def generate_strings(length: int) -> list[str]:
     числом.
     :return: Список строк.
     """
-    pass
+    if not isinstance(length, int) or length <= 0: raise ValueError(STR_LENGTH_ERROR_MSG)
+    if isinstance(length, bool): raise ValueError(STR_LENGTH_ERROR_MSG)
+    return sorted(generation_booles(length) + generation_ones(length))
+        
 
 
 def binomial_coefficient(n: int, k: int, use_rec=False) -> int:
@@ -32,7 +44,40 @@ def binomial_coefficient(n: int, k: int, use_rec=False) -> int:
     числами или значение параметра n меньше чем k.
     :return: Значение биномиального коэффициента.
     """
-    pass
+    
+    if not isinstance(n, int) :
+        raise ValueError(NOT_INT_VALUE_TEMPL.format("n"))
+    
+    if not isinstance(k,int):
+        raise ValueError(NOT_INT_VALUE_TEMPL.format("k"))
+    
+    if k < 0:
+        raise ValueError(NEGATIVE_VALUE_TEMPL.format("k"))
+    
+    if n < 0:
+        raise ValueError(NEGATIVE_VALUE_TEMPL.format("n"))
+    
+    if n<k:
+        raise ValueError(N_LESS_THAN_K_ERROR_MSG)
+    
+    
+    if use_rec: # Рекурсивная реализация функции
+        if n==1 or n==k or k==0:
+            return 1
+        elif k==1:
+            return n
+        else:
+            return binomial_coefficient(n-1, k, True) + binomial_coefficient(n-1, k-1, True)
+    else: # Итеративная реализация
+        k = min(k, n-k)
+        lst = [[0 for i in range(n+1)] for i in range(k+1)]
+        lst[0] = [1 for i in range(n+1)]
+        for i in range(1,k+1):
+            for j in range(0, n):
+                lst[i][j] = lst[i][j-1] + lst[i-1][j-1]
+        
+        return lst[k][n-1]
+
 
 
 def main():
