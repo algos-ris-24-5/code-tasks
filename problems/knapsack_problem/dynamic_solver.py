@@ -4,25 +4,16 @@ from problems.knapsack_problem.knapsack_abs_solver import (
 )
 from problems.knapsack_problem.errors.error_message_enum import ErrorMessageEnum
 
+
 class DynamicSolver(KnapsackAbstractSolver):
     def __init__(self, weights, costs, weight_limit):
-        for weight in weights:
-            if not isinstance(weight, (int, float)):
-                raise ValueError(ErrorMessageEnum.FLOAT_WEIGHT)
+        super().init(weights, costs, weight_limit)
+
+    def get_knapsack(self):
+        for weight in self.weights:
             if isinstance(weight, float) and not weight.is_integer():
                 raise ValueError(ErrorMessageEnum.FLOAT_WEIGHT)
 
-        if len(weights) != len(costs):
-            raise ValueError("Вес и стоимость должны совпадать")
-        if weight_limit <= 0:
-            raise ValueError("Максимальный вес должен быть положительным")
-
-        self.weights = weights
-        self.costs = costs
-        self.weight_limit = weight_limit
-        self.item_cnt = len(weights)
-
-    def get_knapsack(self):
         n = self.item_cnt
         W = self.weight_limit
         weights_int = [int(w) for w in self.weights]
