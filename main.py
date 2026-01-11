@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from srtenum import StrEnum
+from strenum import StrEnum
 
 
 class ErrorMessages(StrEnum):
