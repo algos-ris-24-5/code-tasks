@@ -2,7 +2,7 @@ from problems.knapsack_problem.knapsack_abs_solver import (
     KnapsackAbstractSolver,
     KnapsackSolution,
 )
-
+from problems.knapsack_problem.errors.error_message_enum import ErrorMessageEnum
 
 class DynamicSolver(KnapsackAbstractSolver):
     def get_knapsack(self):
