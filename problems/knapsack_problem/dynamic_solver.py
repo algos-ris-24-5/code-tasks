@@ -5,7 +5,7 @@ from problems.knapsack_problem.knapsack_abs_solver import (
 from problems.knapsack_problem.errors.error_message_enum import ErrorMessageEnum
 
 class DynamicSolver(KnapsackAbstractSolver):
-    def init(self, weights, costs, weight_limit):
+    def __init__(self, weights, costs, weight_limit):
         for weight in weights:
             if not isinstance(weight, (int, float)):
                 raise ValueError(ErrorMessageEnum.FLOAT_WEIGHT)
