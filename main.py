@@ -61,14 +61,14 @@ def binomial_coefficient(n: int, k: int, use_rec=False) -> int:
         raise ValueError(N_LESS_THAN_K_ERROR_MSG)
     
     
-    if use_rec: # Рекурсивная реализация функции
+    if use_rec:
         if n==1 or n==k or k==0:
             return 1
         elif k==1:
             return n
         else:
             return binomial_coefficient(n-1, k, True) + binomial_coefficient(n-1, k-1, True)
-    else: # Итеративная реализация
+    else:
         k = min(k, n-k)
         lst = [[0 for i in range(n+1)] for i in range(k+1)]
         lst[0] = [1 for i in range(n+1)]
