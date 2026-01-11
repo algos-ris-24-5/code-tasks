@@ -7,18 +7,16 @@ from problems.knapsack_problem.errors.error_message_enum import ErrorMessageEnum
 
 class DynamicSolver(KnapsackAbstractSolver):
     def __init__(self, weights, costs, weight_limit):
-        for weight in weights:
-            if isinstance(weight, float) and not weight.is_integer():
-                raise ValueError(ErrorMessageEnum.FLOAT_WEIGHT)
-        
-        weights_as_int = [int(w) for w in weights]
-        
-        super().__init__(weights_as_int, costs, weight_limit)
+        super().__init__(weights, costs, weight_limit)
 
     def get_knapsack(self):
+        for weight in self.weights:
+            if isinstance(weight, float) and not weight.is_integer():
+                raise ValueError(ErrorMessageEnum.FLOAT_WEIGHT)
+
         n = self.item_cnt
         W = self.weight_limit
-        weights_int = self.weights  # уже список int
+        weights_int = [int(w) for w in self.weights]
         costs = self.costs
 
         dp = [[0] * (W + 1) for _ in range(n + 1)]
