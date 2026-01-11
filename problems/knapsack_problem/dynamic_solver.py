@@ -22,7 +22,7 @@ class DynamicSolver(KnapsackAbstractSolver):
                 raise TypeError(ErrorMessageTemplateEnum.NOT_INT.format(WEIGHTS))
             if isinstance(w, float):
                 if not w.is_integer():
-                    raise ValueError(ErrorMessageEnum.FLOAT_WEIGHT)
+                    raise ValueError("Вес предмета не является целым числом")
                 w = int(w)
             if w <= 0:
                 raise ValueError(ErrorMessageTemplateEnum.NOT_POS.format(WEIGHTS))
