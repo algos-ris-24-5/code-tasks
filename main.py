@@ -70,13 +70,13 @@ def binomial_coefficient(n: int, k: int, use_rec=False) -> int:
             return binomial_coefficient(n-1, k, True) + binomial_coefficient(n-1, k-1, True)
     else:
         k = min(k, n-k)
-        lst = [[0 for i in range(n+1)] for i in range(k+1)]
-        lst[0] = [1 for i in range(n+1)]
+        result = [[0 for i in range(n+1)] for i in range(k+1)]
+        result[0] = [1 for i in range(n+1)]
         for i in range(1,k+1):
             for j in range(0, n):
-                lst[i][j] = lst[i][j-1] + lst[i-1][j-1]
+                result[i][j] = result[i][j-1] + result[i-1][j-1]
         
-        return lst[k][n-1]
+        return result[k][n-1]
 
 
 
