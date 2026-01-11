@@ -6,6 +6,16 @@ from problems.knapsack_problem.errors.error_message_enum import ErrorMessageEnum
 
 
 class DynamicSolver(KnapsackAbstractSolver):
+    def init(self, weights, costs, weight_limit):
+        if len(weights) != len(costs):
+            raise ValueError("Количество весов и стоимостей должно совпадать")
+        if weight_limit <= 0:
+            raise ValueError("Максимальный вес должен быть положительным")
+        self.weights = weights
+        self.costs = costs
+        self.weight_limit = weight_limit
+        self.item_cnt = len(weights)
+
     def get_knapsack(self):
         for weight in self.weights:
             if not isinstance(weight, (int, float)):
@@ -33,11 +43,11 @@ class DynamicSolver(KnapsackAbstractSolver):
                     )
 
         selected_items = []
-        current_weight = W
+        w = W
         for i in range(n, 0, -1):
-            if dp[i][current_weight] != dp[i - 1][current_weight]:
+            if dp[i][w] != dp[i - 1][w]:
                 selected_items.append(i - 1)
-                current_weight -= weights_int[i - 1]
+                w -= weights_int[i - 1]
         selected_items.reverse()
 
         return KnapsackSolution(dp[n][W], selected_items)
