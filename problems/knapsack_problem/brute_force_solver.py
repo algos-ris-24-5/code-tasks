@@ -7,16 +7,15 @@ from problems.knapsack_problem.knapsack_abs_solver import (
 class BruteForceSolver(KnapsackAbstractSolver):
     def get_knapsack(self) -> KnapsackSolution:
         """Решает задачу о рюкзаке с использованием полного перебора."""
-        n = self.item_cnt
         max_cost = 0
         best_items = []
-        for i in range(1, 2**n):
-            binary_str = bin(i)[2:].zfill(n)
+        for combination in range(1, 2**self.item_cnt):
+            binary_str = bin(combination)[2:].zfill(self.item_cnt)
             selected_items = [bit == '1' for bit in binary_str]
             current_cost = self.get_cost(selected_items)
             if current_cost > max_cost:
                 max_cost = current_cost
-                best_items = [j for j in range(n) if selected_items[j]]
+                best_items = [item_index for item_index in range(self.item_cnt) if selected_items[item_index]]
         return KnapsackSolution(cost=max_cost, items=best_items)
 
 
