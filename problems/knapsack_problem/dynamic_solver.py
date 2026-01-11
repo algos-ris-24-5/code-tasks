@@ -3,20 +3,61 @@ from problems.knapsack_problem.knapsack_abs_solver import (
     KnapsackSolution,
 )
 from problems.knapsack_problem.errors.error_message_enum import ErrorMessageEnum
+from problems.knapsack_problem.errors.error_message_template import ErrorMessageTemplateEnum
+from problems.knapsack_problem.errors.constants import WEIGHTS, COSTS
 
 
 class DynamicSolver(KnapsackAbstractSolver):
     def __init__(self, weights, costs, weight_limit):
-        super().__init__(weights, costs, weight_limit)
+        if not isinstance(weights, list):
+            raise TypeError(ErrorMessageTemplateEnum.NOT_LIST.format(WEIGHTS))
+        if not weights:
+            raise ValueError(ErrorMessageTemplateEnum.EMPTY_LIST.format(WEIGHTS))
+
+        validated_weights = []
+        for w in weights:
+            if isinstance(w, bool): 
+                raise TypeError(ErrorMessageTemplateEnum.NOT_INT.format(WEIGHTS))
+            if not isinstance(w, (int, float)):
+                raise TypeError(ErrorMessageTemplateEnum.NOT_INT.format(WEIGHTS))
+            if isinstance(w, float):
+                if not w.is_integer():
+                    raise ValueError(ErrorMessageEnum.FLOAT_WEIGHT)
+                w = int(w)
+            if w <= 0:
+                raise ValueError(ErrorMessageTemplateEnum.NOT_POS.format(WEIGHTS))
+            validated_weights.append(w)
+
+        if not isinstance(costs, list):
+            raise TypeError(ErrorMessageTemplateEnum.NOT_LIST.format(COSTS))
+        if not costs:
+            raise ValueError(ErrorMessageTemplateEnum.EMPTY_LIST.format(COSTS))
+        validated_costs = []
+        for c in costs:
+            if isinstance(c, bool):
+                raise TypeError(ErrorMessageTemplateEnum.NOT_INT.format(COSTS))
+            if not isinstance(c, int):
+                raise TypeError(ErrorMessageTemplateEnum.NOT_INT.format(COSTS))
+            if c <= 0:
+                raise ValueError(ErrorMessageTemplateEnum.NOT_POS.format(COSTS))
+            validated_costs.append(c)
+
+        if len(validated_weights) != len(validated_costs):
+            raise ValueError(ErrorMessageEnum.LENGTHS_NOT_EQUAL)
+
+        if not isinstance(weight_limit, int) or isinstance(weight_limit, bool):
+            raise TypeError(ErrorMessageEnum.NOT_INT_WEIGHT_LIMIT)
+        if weight_limit <= 0:
+            raise ValueError(ErrorMessageEnum.NOT_POS_WEIGHT_LIMIT)
+        if weight_limit < min(validated_weights):
+            raise ValueError(ErrorMessageEnum.LESS_WEIGHT_LIMIT)
+
+        super().__init__(validated_weights, validated_costs, weight_limit)
 
     def get_knapsack(self):
-        for weight in self.weights:
-            if isinstance(weight, float) and not weight.is_integer():
-                raise ValueError(ErrorMessageEnum.FLOAT_WEIGHT)
-
         n = self.item_cnt
         W = self.weight_limit
-        weights_int = [int(w) for w in self.weights]
+        weights_int = self.weights
         costs = self.costs
 
         dp = [[0] * (W + 1) for _ in range(n + 1)]
