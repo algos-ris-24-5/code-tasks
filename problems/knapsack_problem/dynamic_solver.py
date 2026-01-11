@@ -7,14 +7,7 @@ from problems.knapsack_problem.errors.error_message_enum import ErrorMessageEnum
 
 class DynamicSolver(KnapsackAbstractSolver):
     def init(self, weights, costs, weight_limit):
-        if len(weights) != len(costs):
-            raise ValueError("Количество весов и стоимостей должно совпадать")
-        if weight_limit <= 0:
-            raise ValueError("Максимальный вес должен быть положительным")
-        self.weights = weights
-        self.costs = costs
-        self.weight_limit = weight_limit
-        self.item_cnt = len(weights)
+        super().init(weights, costs, weight_limit)
 
     def get_knapsack(self):
         for weight in self.weights:
