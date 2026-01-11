@@ -64,10 +64,9 @@ def binomial_coefficient(n: int, k: int, use_rec=False) -> int:
     if use_rec:
         if n==1 or n==k or k==0:
             return 1
-        elif k==1:
+        if k==1:
             return n
-        else:
-            return binomial_coefficient(n-1, k, True) + binomial_coefficient(n-1, k-1, True)
+        return binomial_coefficient(n-1, k, True) + binomial_coefficient(n-1, k-1, True)
     else:
         k = min(k, n-k)
         result = [[0 for i in range(n+1)] for i in range(k+1)]
