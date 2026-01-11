@@ -7,7 +7,7 @@ from problems.knapsack_problem.errors.error_message_enum import ErrorMessageEnum
 
 class DynamicSolver(KnapsackAbstractSolver):
     def __init__(self, weights, costs, weight_limit):
-        super().init(weights, costs, weight_limit)
+        super().__init__(weights, costs, weight_limit)
 
     def get_knapsack(self):
         for weight in self.weights:
@@ -18,7 +18,6 @@ class DynamicSolver(KnapsackAbstractSolver):
         W = self.weight_limit
         weights_int = [int(w) for w in self.weights]
         costs = self.costs
-
         dp = [[0] * (W + 1) for _ in range(n + 1)]
 
         for i in range(1, n + 1):
