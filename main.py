@@ -23,7 +23,6 @@ class ProfitValueError(Exception):
         self.row_idx = row_idx
         super().__init__(message)
 
-
 def get_invest_distribution(
     profit_matrix: list[list[int]],
 ) -> Result:
