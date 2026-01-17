@@ -10,7 +10,29 @@ def generate_permutations(items: list[Any]) -> list[list[Any]]:
     :return: список перестановок, где каждая перестановка список элементов
     множества
     """
-    pass
+    if not isinstance(items, list):
+        raise TypeError("Параметр items не является списком")
+    
+    if len(items) != len(set(items)):
+        raise ValueError("Список элементов содержит дубликаты")
+    
+    if not items:
+        return []
+    
+    if len(items) == 1:
+        return [items.copy()]
+    
+    permutations = []
+    smaller_permutations = generate_permutations(items[:-1])
+    last_item = items[-1]
+    
+    for perm in smaller_permutations:
+        for i in range(len(perm) + 1):
+            new_perm = perm.copy()
+            new_perm.insert(i, last_item)
+            permutations.append(new_perm)
+    
+    return permutations
 
 
 def main():
