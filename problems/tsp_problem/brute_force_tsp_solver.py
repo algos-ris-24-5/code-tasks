@@ -62,4 +62,3 @@ if __name__ == "__main__":
     result = solver.get_tsp_solution()
     print(f"Минимальное расстояние: {result.distance}, " f"Маршрут: {result.path}")
 
-    
