@@ -12,12 +12,10 @@ class BruteForceTspSolver(AbstractTspSolver):
         - distance - кратчайшее расстояние,
         - path - список с индексами вершин на кратчайшем маршруте.
         """
-        n = len(self._dist_matrix)
-        
-        if n == 1:
+        if self.order == 1:
             return TspSolution(0, [0])
         
-        cities = list(range(1, n))
+        cities = list(range(1, self.order))
         
         if not cities:
             return TspSolution(None, [])
@@ -29,9 +27,15 @@ class BruteForceTspSolver(AbstractTspSolver):
         
         for perm in permutations:
             path = [0] + list(perm) + [0]
-            distance = self._calculate_path_distance(path)
             
-            if distance is not None:
+            valid_path = True
+            for i in range(1, len(path)):
+                if self._dist_matrix[path[i-1]][path[i]] is None:
+                    valid_path = False
+                    break
+            
+            if valid_path:
+                distance = self.get_distance(self._dist_matrix, path)
                 if min_distance is None or distance < min_distance:
                     min_distance = distance
                     best_path = path
@@ -40,20 +44,6 @@ class BruteForceTspSolver(AbstractTspSolver):
             return TspSolution(None, [])
         
         return TspSolution(min_distance, best_path)
-    
-    def _calculate_path_distance(self, path: list[int]) -> float:
-        distance = 0.0
-        for i in range(1, len(path)):
-            src = path[i - 1]
-            trg = path[i]
-            weight = self._dist_matrix[src][trg]
-            
-            if weight is None:
-                return None
-            
-            distance += weight
-        
-        return distance
 
 
 if __name__ == "__main__":
