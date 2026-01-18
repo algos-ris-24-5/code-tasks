@@ -1,6 +1,6 @@
 import unittest
 
-
+from schedules.schedule_item import ScheduleItem
 from schedules import ScheduleItem
 from schedules.abstract_schedule import AbstractSchedule
 from schedules.conveyor_schedule import ConveyorSchedule
@@ -261,6 +261,63 @@ class TestConveyorSchedule(unittest.TestCase):
         self.assertEqual(32, schedule.duration)
         self.assertEqual(stage1_schedule, schedule.get_schedule_for_executor(0))
         self.assertEqual(stage2_schedule, schedule.get_schedule_for_executor(1))
+
+    def test_add_task_recalc(self):
+        """Проверяет, что добавление задачи корректно пересчитывает расписание."""
+        self.assertEqual(4, self.schedule.duration)
+        task_c = StagedTask("c", [6, 5])
+        self.schedule.add_task(task_c)
+        self.assertEqual(3, self.schedule.task_count)
+        self.assertIn(task_c, self.schedule.tasks)
+        self.assertEqual(13, self.schedule.duration)
+        items = self.schedule.get_schedule_for_executor(0)
+        tasks_order = [item.task_name for item in items if not item.is_downtime]
+        self.assertEqual(["b", "c", "a"], tasks_order)
+
+    def test_add_invalid_task(self):
+        """Проверяет выброс исключения при добавлении некорректной задачи."""
+        schedule = ConveyorSchedule([StagedTask("a", [1, 1])])
+        with self.assertRaises(ScheduleArgumentError):
+            schedule.add_task("not a task")   
+        task_bad = StagedTask("bad", [1, 2, 3])
+        with self.assertRaises(ScheduleArgumentError):
+            schedule.add_task(task_bad)
+
+    def test_add_task_recalc(self):
+        """Проверяет, что добавление задачи корректно пересчитывает расписание."""
+        task_a = StagedTask("a", [2, 1])
+        task_b = StagedTask("b", [1, 2])
+        schedule = ConveyorSchedule([task_a, task_b])
+        self.assertEqual(4, schedule.duration)
+        task_c = StagedTask("c", [6, 5])
+        schedule.add_task(task_c)
+        self.assertEqual(3, schedule.task_count)
+        self.assertIn(task_c, schedule.tasks)
+        self.assertEqual(13, schedule.duration)
+        items = schedule.get_schedule_for_executor(0)
+        tasks_order = [item.task_name for item in items if not item.is_downtime]
+        self.assertEqual(["b", "c", "a"], tasks_order)
+
+    def test_remove_task_recalc(self):
+        """Проверяет, что удаление задачи корректно пересчитывает расписание."""        
+        task_a = StagedTask("a", [2, 1])
+        task_b = StagedTask("b", [1, 2])
+        schedule = ConveyorSchedule([task_a, task_b])
+        schedule.remove_task(task_a)            
+        self.assertEqual(1, schedule.task_count)
+        self.assertNotIn(task_a, schedule.tasks)
+        self.assertEqual(3, schedule.duration)    
+        items1 = schedule.get_schedule_for_executor(0)
+        self.assertEqual(items1[0].task_name, "b")
+        self.assertEqual(items1[1].is_downtime, True)
+        self.assertEqual(items1[1].end, 3)
+
+    def test_remove_nonexistent_task(self):
+        """Проверяет ошибку при удалении несуществующей задачи."""
+        schedule = ConveyorSchedule([StagedTask("a", [1, 1])])
+        task_new = StagedTask("new", [1, 1])
+        with self.assertRaises(ValueError):
+            schedule.remove_task(task_new)
 
 
 if __name__ == "__main__":
