@@ -60,11 +60,11 @@ class ConveyorSchedule(AbstractSchedule):
         free2 = 0
         for task in tasks:
             start1 = free1
-            end1 = start1 + task.stage_times[0]
+            end1 = start1 + task.stage_durations[0]
             self._executor_schedule[0].append(ScheduleItem(task, start1, end1))
             free1 = end1
             start2 = max(free2, end1)
-            end2 = start2 + task.stage_times[1]
+            end2 = start2 + task.stage_durations[1]
             self._executor_schedule[1].append(ScheduleItem(task, start2, end2))
             free2 = end2
 
@@ -72,10 +72,10 @@ class ConveyorSchedule(AbstractSchedule):
     def __sort_tasks(tasks: list[StagedTask]) -> list[StagedTask]:
         """Возвращает отсортированный список задач для применения
         алгоритма Джонсона."""
-        group1 = [t for t in tasks if (t.stage_times[0] <= t.stage_times[1])]
+        group1 = [t for t in tasks if (t.stage_durations[0] <= t.stage_durations[1])]
         group1.sort(key=lambda t: t.stage_times[0])
-        group2 = [t for t in tasks if (t.stage_times[0] > t.stage_times[1])]
-        group2.sort(key=lambda t: t.stage_times[1])
+        group2 = [t for t in tasks if (t.stage_durations[0] > t.stage_durations[1])]
+        group2.sort(key=lambda t: t.stage_durations[1])
         group2 = group2[::-1]
         return group1 + group2
 
