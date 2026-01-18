@@ -73,7 +73,7 @@ class ConveyorSchedule(AbstractSchedule):
         """Возвращает отсортированный список задач для применения
         алгоритма Джонсона."""
         group1 = [t for t in tasks if (t.stage_durations[0] <= t.stage_durations[1])]
-        group1.sort(key=lambda t: t.stage_times[0])
+        group1.sort(key=lambda t: t.stage_durations[0])
         group2 = [t for t in tasks if (t.stage_durations[0] > t.stage_durations[1])]
         group2.sort(key=lambda t: t.stage_durations[1])
         group2 = group2[::-1]
