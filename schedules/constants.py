@@ -17,3 +17,11 @@ SCHEDULE_STR_TEMPL = (
 
 STAGED_TASK_STR_TEMPL = "задача [{0}], продолжительность {1}, этапов {2}"
 """Шаблон для приведения задачи StagedTask к строковому типу"""
+
+SCHEDULE_MERMAID_EXECUTOR = "section Исполнитель {0}\n"
+
+SCHEDULE_MERMAID_TASK_FIRST = "{0} :{1}1, 00, {2}h" 
+
+SCHEDULE_MERMAID_TASK = "{0} :{1}{2}, after {3}, {4}h"
+
+SCHEDULE_MERMAID_IDLE = "Простой :{0}, {1}, {2}h"

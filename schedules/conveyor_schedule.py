@@ -60,13 +60,15 @@ class ConveyorSchedule(AbstractSchedule):
         free2 = 0
         for task in tasks:
             start1 = free1
+            self._executor_schedule[0].append(ScheduleItem(task, start1, task.stage_durations[0]))
             end1 = start1 + task.stage_durations[0]
-            self._executor_schedule[0].append(ScheduleItem(task, start1, end1))
             free1 = end1
             start2 = max(free2, end1)
+            if start2 > free2: self._executor_schedule[1].append(ScheduleItem(None, free2, start2 - free2))
+            self._executor_schedule[1].append(ScheduleItem(task, start2, task.stage_durations[1]))
             end2 = start2 + task.stage_durations[1]
-            self._executor_schedule[1].append(ScheduleItem(task, start2, end2))
             free2 = end2
+        if free1 < free2: self._executor_schedule[0].append(ScheduleItem(None, free1, free2-free1))
 
     @staticmethod
     def __sort_tasks(tasks: list[StagedTask]) -> list[StagedTask]:

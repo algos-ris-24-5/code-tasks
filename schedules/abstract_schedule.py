@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 
-from schedules.constants import SCHEDULE_STR_TEMPL
+from schedules.constants import SCHEDULE_STR_TEMPL, SCHEDULE_MERMAID_EXECUTOR, SCHEDULE_MERMAID_TASK_FIRST, SCHEDULE_MERMAID_TASK, SCHEDULE_MERMAID_IDLE
 from schedules.errors import ErrorMessages, ErrorTemplates, ScheduleArgumentError
 from schedules.schedule_item import ScheduleItem
 from schedules.task import Task
+
 
 
 class AbstractSchedule(ABC):
@@ -104,3 +105,69 @@ class AbstractSchedule(ABC):
             raise ScheduleArgumentError(ErrorMessages.EXECUTOR_NOT_INT)
         if executor_idx >= self.executor_count:
             raise ScheduleArgumentError(ErrorMessages.EXECUTOR_OUT_OF_RANGE)
+
+    def get_mermaid_gantt(self) -> str:
+        
+        mermaidElementsList = []
+        mermaidElementsList.append(
+            '```mermaid\n'
+            'gantt\n'
+            'title Диаграмма Ганта\n'
+            'dateFormat HH:mm\n'  
+            'axisFormat %H:%M\n'  
+            'Начало выполнения работ : milestone, m1, 00:00, 0m\n'
+        )
+        
+        for executor in range(self.executor_count):
+            tempExecutorString = self.__get_mermaid_gantt_executor(executor)
+            mermaidElementsList.append(tempExecutorString)
+
+        total_minutes = int(self.duration * 60)
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+        mermaidElementsList.append(
+            f'Окончание выполнения работ : milestone, m2, {hours:02d}:{minutes:02d}, 0m\n'
+            '```'
+        )
+        
+        result = ''.join(mermaidElementsList)
+        return result
+
+    def __get_mermaid_gantt_executor(self, executor) -> str:
+        
+        tempExecutorList = [SCHEDULE_MERMAID_EXECUTOR.format(executor+1)]
+        count = 1
+        idleCount = 1
+        previousId = None
+        
+        for scheduleItem in self.get_schedule_for_executor(executor):
+            
+            duration = scheduleItem.duration
+            
+            if scheduleItem.is_downtime:
+                    
+                currentId = f'idle{executor}_{idleCount}'
+                
+                if previousId is None:
+                    tempExecutorList.append(SCHEDULE_MERMAID_IDLE.format(currentId, '00', duration))  
+                
+                else:
+                    tempExecutorList.append(SCHEDULE_MERMAID_IDLE.format(currentId, f'after {previousId}', duration))
+                
+                previousId= currentId
+                idleCount+=1
+
+            else:
+                taskName = scheduleItem.task.name
+                
+                if previousId is None:
+                    tempExecutorList.append(SCHEDULE_MERMAID_TASK_FIRST.format(taskName, taskName, duration))
+                    previousId = f'{taskName}1'
+                    
+                else:
+                    tempExecutorList.append(SCHEDULE_MERMAID_TASK.format(taskName, taskName, count, previousId, duration))
+                    previousId = f'{taskName}{count}'
+                count+=1
+                
+        tempExecutorString = '\n'.join(tempExecutorList)
+        return tempExecutorString + '\n'
