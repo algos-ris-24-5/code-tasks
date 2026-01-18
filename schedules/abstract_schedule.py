@@ -81,7 +81,7 @@ class AbstractSchedule(ABC):
 
         :param executor_idx: Индекс исполнителя.
         :raise ScheduleArgumentError: Если индекс исполнителя не является целым
-         положительным числом или превышает количество исполнителей.
+        положительным числом или превышает количество исполнителей.
         :return: Расписание для указанного исполнителя.
         """
         self.__validate_executor_idx(executor_idx)
@@ -114,7 +114,8 @@ class AbstractSchedule(ABC):
             'gantt\n'
             'title Диаграмма Ганта\n'
             'dateFormat HH:mm\n'  
-            'axisFormat %H:%M\n'  
+            'axisFormat %H:%M\n'
+            'todayMarker off\n'  
             'Начало выполнения работ : milestone, m1, 00:00, 0m\n'
         )
         
@@ -122,11 +123,7 @@ class AbstractSchedule(ABC):
             tempExecutorString = self.__get_mermaid_gantt_executor(executor)
             mermaidElementsList.append(tempExecutorString)
 
-        total_minutes = int(self.duration * 60)
-        hours = total_minutes // 60
-        minutes = total_minutes % 60
         mermaidElementsList.append(
-            f'Окончание выполнения работ : milestone, m2, {hours:02d}:{minutes:02d}, 0m\n'
             '```'
         )
         
@@ -139,7 +136,7 @@ class AbstractSchedule(ABC):
         count = 1
         idleCount = 1
         previousId = None
-        
+        executorId = executor+1
         for scheduleItem in self.get_schedule_for_executor(executor):
             
             duration = scheduleItem.duration
@@ -149,7 +146,7 @@ class AbstractSchedule(ABC):
                 currentId = f'idle{executor}_{idleCount}'
                 
                 if previousId is None:
-                    tempExecutorList.append(SCHEDULE_MERMAID_IDLE.format(currentId, '00', duration))  
+                    tempExecutorList.append(SCHEDULE_MERMAID_IDLE.format(currentId, '00:00', duration))  
                 
                 else:
                     tempExecutorList.append(SCHEDULE_MERMAID_IDLE.format(currentId, f'after {previousId}', duration))
@@ -158,15 +155,27 @@ class AbstractSchedule(ABC):
                 idleCount+=1
 
             else:
-                taskName = scheduleItem.task.name
+                taskName = scheduleItem.task_name
                 
                 if previousId is None:
-                    tempExecutorList.append(SCHEDULE_MERMAID_TASK_FIRST.format(taskName, taskName, duration))
-                    previousId = f'{taskName}1'
+                    tempExecutorList.append(SCHEDULE_MERMAID_TASK_FIRST.format(
+                            taskName, 
+                            taskName,  
+                            duration,
+                            executorId
+                        )) 
+                    previousId = f'{taskName}_{executorId}_1'
                     
                 else:
-                    tempExecutorList.append(SCHEDULE_MERMAID_TASK.format(taskName, taskName, count, previousId, duration))
-                    previousId = f'{taskName}{count}'
+                    tempExecutorList.append(SCHEDULE_MERMAID_TASK.format(
+                            taskName,
+                            taskName,  
+                            count,
+                            previousId, 
+                            duration,   
+                            executorId 
+                        ))
+                    previousId= f'{taskName}_{executorId}_{count}'
                 count+=1
                 
         tempExecutorString = '\n'.join(tempExecutorList)
