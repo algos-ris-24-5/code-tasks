@@ -33,31 +33,115 @@ class DoublyLinkedList(BaseList):
 
     def append(self, value):
         """Добавляет элемент в конец списка."""
-        pass
+        new_node = DoublyListNode(value)
+        if self.head is None:
+            self.head = new_node
+            self.tail = new_node
+        else:
+            new_node.prev = self.tail
+            self.tail.next = new_node
+            self.tail = new_node
+        self.size += 1
 
     def appendleft(self, value):
         """Добавляет элемент в начало списка."""
-        pass
+        new_node = DoublyListNode(value)
+        if self.head is None:
+            self.head = new_node
+            self.tail = new_node
+        else:
+            new_node.next = self.head
+            self.head.prev = new_node
+            self.head = new_node
+        self.size += 1
 
     def insert(self, index, value):
         """Вставляет элемент по указанному индексу (0 ≤ index ≤ len)."""
-        pass
+        if index < 0 or index > self.size:
+            raise IndexError("Индекс вне диапазона")
+
+        if index == 0:
+            self.appendleft(value)
+            return
+
+        if index == self.size:
+            self.append(value)
+            return
+        current = self.head
+        for _ in range(index - 1):
+            current = current.next
+
+        new_node = DoublyListNode(value)
+        new_node.next = current.next
+        new_node.prev = current
+        current.next.prev = new_node
+        current.next = new_node
+        self.size += 1
 
     def remove(self, value):
         """Удаляет первый элемент с указанным значением."""
-        pass
+        current = self.head
+        while current:
+            if current.value == value:
+                if current.prev:
+                    current.prev.next = current.next
+                else:
+                    self.head = current.next
+
+                if current.next:
+                    current.next.prev = current.prev
+                else:
+                    self.tail = current.prev
+
+                self.size -= 1
+                return
+
+            current = current.next
+
+        raise ValueError(f"Элемент {value} не найден в списке")
 
     def pop(self):
         """Удаляет и возвращает последний элемент."""
-        pass
+        if self.head is None:
+            raise IndexError("pop из пустого списка")
+
+        value = self.tail.value
+        if self.head == self.tail: 
+            self.head = None
+            self.tail = None
+        else:
+            self.tail = self.tail.prev
+            self.tail.next = None
+
+        self.size -= 1
+        return value
 
     def popleft(self):
         """Удаляет и возвращает первый элемент."""
-        pass
+        if self.head is None:
+            raise IndexError("popleft из пустого списка")
+
+        value = self.head.value
+        if self.head == self.tail:
+            self.head = None
+            self.tail = None
+        else:
+            self.head = self.head.next
+            self.head.prev = None
+
+        self.size -= 1
+        return value
 
     def index(self, value):
         """Возвращает индекс первого элемента с указанным значением или None."""
-        pass
+        current = self.head
+        index = 0
+        while current:
+            if current.value == value:
+                return index
+            current = current.next
+            index += 1
+        return None
 
     def __str__(self) -> str:
         """Возвращает строковое представление двусвязного списка."""
@@ -74,13 +158,17 @@ class DoublyLinkedList(BaseList):
 
     def __iter__(self):
         """Итерация по элементам списка слева направо."""
-        pass
+        current = self.head
+        while current:
+            yield current.value
+            current = current.next
 
     def __reversed__(self):
         """Итерация по элементам списка справа налево."""
-        pass
-
-
+        current = self.tail
+        while current:
+            yield current.value
+            current = current.prev
 if __name__ == "__main__":
     dll = DoublyLinkedList()
 
@@ -106,3 +194,4 @@ if __name__ == "__main__":
     print("Элементы списка:", [x for x in dll])
 
     print("Обратный обход:", [x for x in reversed(dll)])
+
