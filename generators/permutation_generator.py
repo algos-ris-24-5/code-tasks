@@ -1,6 +1,5 @@
 from typing import Any
 
-
 def generate_permutations(items: list[Any]) -> list[list[Any]]:
     """Генерирует все варианты перестановок элементов указанного множества
 
