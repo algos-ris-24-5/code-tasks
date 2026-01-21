@@ -71,8 +71,6 @@ class TestConveyorSchedule(unittest.TestCase):
         tasks = [StagedTask("a", [1, 1]), StagedTask("b", [1, 1])]
         schedule = ConveyorSchedule(tasks)
         str_schedule = SCHEDULE_STR_TEMPL.format(3, 2, 2)
-        print("Ожидаемое:", repr(str_schedule))
-        print("Фактическое:", repr(str(schedule)))
         self.assertEqual(str_schedule, str(schedule))
 
     def test_single_task(self):
