@@ -56,13 +56,69 @@ class ConveyorSchedule(AbstractSchedule):
     def __fill_schedule(self, tasks: list[StagedTask]) -> None:
         """Процедура составляет расписание из элементов ScheduleItem для каждого
         исполнителя, согласно алгоритму Джонсона."""
-        pass
+        time_0 = 0
+        time_1 = 0
+        raw_0 = []
+        raw_1 = []
+
+        for task in tasks:
+            a, b = task.stage_durations
+
+            start_0 = time_0
+            raw_0.append(ScheduleItem(task, start_0, a))
+            time_0 = start_0 + a
+
+            start_1 = max(time_0, time_1)
+            raw_1.append(ScheduleItem(task, start_1, b))
+            time_1 = start_1 + b
+
+        total_duration = max(time_0, time_1)
+
+        filled_0 = []
+        current_time = 0
+        for item in raw_0:
+            if item.start > current_time:
+                gap = item.start - current_time
+                filled_0.append(ScheduleItem(None, current_time, gap))
+            filled_0.append(item)
+            current_time = item.end
+        if current_time < total_duration:
+            gap = total_duration - current_time
+            filled_0.append(ScheduleItem(None, current_time, gap))
+
+        filled_1 = []
+        current_time = 0
+        for item in raw_1:
+            if item.start > current_time:
+                gap = item.start - current_time
+                filled_1.append(ScheduleItem(None, current_time, gap))
+            filled_1.append(item)
+            current_time = item.end
+        if current_time < total_duration:
+            gap = total_duration - current_time
+            filled_1.append(ScheduleItem(None, current_time, gap))
+
+        self._executor_schedule[0] = filled_0
+        self._executor_schedule[1] = filled_1
 
     @staticmethod
     def __sort_tasks(tasks: list[StagedTask]) -> list[StagedTask]:
         """Возвращает отсортированный список задач для применения
         алгоритма Джонсона."""
-        pass
+        group1 = []
+        group2 = []
+
+        for task in tasks:
+            a, b = task.stage_durations
+            if a <= b:
+                group1.append(task)
+            else:
+                group2.append(task)
+
+        group1.sort(key=lambda t: t.stage_durations[0])
+        group2.sort(key=lambda t: t.stage_durations[1], reverse=True)
+        
+        return group1 + group2
 
     @staticmethod
     def __validate_params(tasks: list[StagedTask]) -> None:

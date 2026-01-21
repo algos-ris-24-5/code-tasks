@@ -75,6 +75,21 @@ class AbstractSchedule(ABC):
         """Возвращает общую продолжительность расписания."""
         pass
 
+    def get_downtime_for_executor(self, executor_idx: int) -> float:
+        """Возвращает общее время простоя указанного исполнителя."""
+        self.__validate_executor_idx(executor_idx)
+        return sum(
+            item.duration for item in self._executor_schedule[executor_idx]
+            if item.is_downtime
+        )
+    
+    def total_downtime(self) -> float:
+        """Возвращает общее время простоя всех исполнителей."""
+        return sum(
+            self.get_downtime_for_executor(i)
+            for i in range(self.executor_count)
+        )
+
     def get_schedule_for_executor(self, executor_idx: int) -> tuple[ScheduleItem]:
         """Возвращает расписание для указанного исполнителя.
 

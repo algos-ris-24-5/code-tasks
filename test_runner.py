@@ -5,6 +5,7 @@ from tests.test_staged_task import TestStagedTask
 from tests.test_task import TestTask
 from tests.test_schedule_item import TestScheduleItem
 from tests.test_conveyor_schedule import TestConveyorSchedule
+from tests.test_abstract_schedule import TestDowntimeMethods
 
 
 def suite():
@@ -14,6 +15,7 @@ def suite():
     test_suite.addTest(TestLoader().loadTestsFromTestCase(TestScheduleItem))
     test_suite.addTest(TestLoader().loadTestsFromTestCase(TestStagedTask))
     test_suite.addTest(TestLoader().loadTestsFromTestCase(TestConveyorSchedule))
+    test_suite.addTest(TestLoader().loadTestsFromTestCase(TestDowntimeMethods))
     return test_suite
 
 
