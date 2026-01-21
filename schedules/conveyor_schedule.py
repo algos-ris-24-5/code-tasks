@@ -56,13 +56,51 @@ class ConveyorSchedule(AbstractSchedule):
     def __fill_schedule(self, tasks: list[StagedTask]) -> None:
         """Процедура составляет расписание из элементов ScheduleItem для каждого
         исполнителя, согласно алгоритму Джонсона."""
-        pass
+        self._executor_schedule = [[], []]
+
+        current_end_time_executor_1 = 0
+        current_end_time_executor_2 = 0
+
+        for task in tasks:
+            time_stage_1 = task.stage_duration(0)
+            time_stage_2 = task.stage_duration(1)
+
+            self._executor_schedule[0].append(ScheduleItem(task, current_end_time_executor_1, time_stage_1))
+            current_end_time_executor_1 += time_stage_1
+
+            start_time_executor_2 = max(current_end_time_executor_2, current_end_time_executor_1)
+            if start_time_executor_2 > current_end_time_executor_2:
+                idle_duration = start_time_executor_2 - current_end_time_executor_2
+                self._executor_schedule[1].append(ScheduleItem(None, current_end_time_executor_2, idle_duration))
+
+            self._executor_schedule[1].append(ScheduleItem(task, start_time_executor_2, time_stage_2))
+            current_end_time_executor_2 = start_time_executor_2 + time_stage_2
+
+        if current_end_time_executor_1 < current_end_time_executor_2:
+            idle_duration = current_end_time_executor_2 - current_end_time_executor_1
+            self._executor_schedule[0].append(ScheduleItem(None, current_end_time_executor_1, idle_duration))
+
 
     @staticmethod
     def __sort_tasks(tasks: list[StagedTask]) -> list[StagedTask]:
         """Возвращает отсортированный список задач для применения
         алгоритма Джонсона."""
-        pass
+        group_1 = []
+        group_2 = []
+
+        for task in tasks:
+            time_stage_1 = task.stage_duration(0)
+            time_stage_2 = task.stage_duration(1)
+            if time_stage_1 <= time_stage_2:
+                group_1.append(task)
+            else:
+                group_2.append(task)
+
+        group_1.sort(key=lambda task: task.stage_duration(0))
+        group_2.sort(key=lambda task: task.stage_duration(1), reverse=True)
+
+        return group_1 + group_2
+
 
     @staticmethod
     def __validate_params(tasks: list[StagedTask]) -> None:
@@ -79,6 +117,15 @@ class ConveyorSchedule(AbstractSchedule):
                 raise ScheduleArgumentError(
                     ErrorTemplates.INVALID_STAGE_CNT.format(idx)
                 )
+    
+    def update_tasks(self, new_tasks: list[StagedTask]) -> None:
+        """Обновляет список задач и пересчитывает расписание
+        согласно алгоритму Джонсона."""
+        ConveyorSchedule.__validate_params(new_tasks)
+        self._tasks = new_tasks
+        self._executor_schedule = [[] for _ in range(2)]
+        sorted_tasks = self.__sort_tasks(new_tasks)
+        self.__fill_schedule(sorted_tasks)
 
 
 if __name__ == "__main__":

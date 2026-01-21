@@ -71,6 +71,8 @@ class TestConveyorSchedule(unittest.TestCase):
         tasks = [StagedTask("a", [1, 1]), StagedTask("b", [1, 1])]
         schedule = ConveyorSchedule(tasks)
         str_schedule = SCHEDULE_STR_TEMPL.format(3, 2, 2)
+        print("Ожидаемое:", repr(str_schedule))
+        print("Фактическое:", repr(str(schedule)))
         self.assertEqual(str_schedule, str(schedule))
 
     def test_single_task(self):
@@ -261,6 +263,39 @@ class TestConveyorSchedule(unittest.TestCase):
         self.assertEqual(32, schedule.duration)
         self.assertEqual(stage1_schedule, schedule.get_schedule_for_executor(0))
         self.assertEqual(stage2_schedule, schedule.get_schedule_for_executor(1))
+
+    def test_update_tasks(self):
+        """Проверяет обновление задач и пересчёт расписания."""
+        task_a = StagedTask("a", [1, 2])
+        task_b = StagedTask("b", [2, 1])
+        schedule = ConveyorSchedule([task_a])
+        schedule.update_tasks([task_b])
+        stage1_schedule = (
+            ScheduleItem(task_b, 0, 2),
+            ScheduleItem(None, 2, 1)
+        )
+        stage2_schedule = (
+            ScheduleItem(None, 0, 2),
+            ScheduleItem(task_b, 2, 1)
+        )
+        self.assertEqual((task_b,), schedule.tasks)
+        self.assertEqual(1, schedule.task_count)
+        self.assertEqual(3, schedule.duration)
+        self.assertEqual(stage1_schedule, schedule.get_schedule_for_executor(0))
+        self.assertEqual(stage2_schedule, schedule.get_schedule_for_executor(1))
+    
+    def test_update_tasks_with_validation(self):
+        """Проверяет валидацию при обновлении задач."""
+        schedule = ConveyorSchedule([StagedTask("a", [1, 1])])
+
+        with self.assertRaises(ScheduleArgumentError):
+            schedule.update_tasks(None)
+
+        with self.assertRaises(ScheduleArgumentError):
+            schedule.update_tasks([])
+
+        with self.assertRaises(ScheduleArgumentError):
+            schedule.update_tasks([StagedTask("a", [1, 1]), "not a task"])
 
 
 if __name__ == "__main__":
