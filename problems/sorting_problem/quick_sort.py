@@ -1,3 +1,7 @@
+import random
+
+_ERROR_TEMPLATE = "Переданы несравнимые экземпляры классов '{0}' и '{1}'"
+
 def quick_sort(items):
     """Сортирует переданный список по возрастанию с использованием алгоритма
     быстрой сортировки (Quick Sort).
@@ -11,46 +15,7 @@ def quick_sort(items):
     :rtype: list
     :raises TypeError: Если элементы списка несравнимы между собой.
     """
-
-    def _partition(arr, left, right):
-        pivot = arr[(left + right) // 2]
-        i = left
-        j = right
-
-        while True:
-            try:
-                while arr[i] < pivot:
-                    i += 1
-                while arr[j] > pivot:
-                    j -= 1
-            except TypeError:
-                a = arr[j]
-                b = pivot
-
-                type_a = type(a).__name__
-                type_b = type(b).__name__
-
-                if isinstance(a, (int, float)) and isinstance(b, str):
-                    type_a, type_b = "str", "int"
-                elif isinstance(a, str) and isinstance(b, (int, float)):
-                    type_a, type_b = "str", "int"
-
-                raise TypeError(
-                    f"Переданы несравнимые экземпляры классов '{type_a}' и '{type_b}'"
-                )
-
-            if i >= j:
-                return j
-
-            arr[i], arr[j] = arr[j], arr[i]
-            i += 1
-            j -= 1
-
-    def _quick_sort(arr, left, right):
-        if left < right:
-            pivot_index = _partition(arr, left, right)
-            _quick_sort(arr, left, pivot_index)
-            _quick_sort(arr, pivot_index + 1, right)
+    _validate_comparable(items)
 
     arr = items.copy()
     if len(arr) <= 1:
@@ -58,6 +23,52 @@ def quick_sort(items):
 
     _quick_sort(arr, 0, len(arr) - 1)
     return arr
+
+
+def _validate_comparable(items):
+    if not items: 
+        return
+
+    first_item = items[0]
+    for item in items:
+        try:
+            is_comparable = item < first_item
+        except TypeError:
+            type_a = type(item).__name__
+            type_b = type(first_item).__name__
+
+            if type_a < type_b:
+                type_a, type_b = type_b, type_a
+
+            raise TypeError(_ERROR_TEMPLATE.format(type_a, type_b))
+
+
+def _partition(arr, left, right):
+    pivot_idx = random.randint(left, right)
+    pivot = arr[pivot_idx]
+
+    left_idx = left
+    right_idx = right
+
+    while True:
+        while arr[left_idx] < pivot:
+            left_idx += 1
+        while arr[right_idx] > pivot:
+            right_idx -= 1
+
+        if left_idx >= right_idx:
+            return right_idx
+
+        arr[left_idx], arr[right_idx] = arr[right_idx], arr[left_idx]
+        left_idx += 1
+        right_idx -= 1
+
+
+def _quick_sort(arr, left, right):
+    if left < right:
+        pivot_index = _partition(arr, left, right)
+        _quick_sort(arr, left, pivot_index)
+        _quick_sort(arr, pivot_index + 1, right)
 
 
 def main():
