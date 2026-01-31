@@ -5,7 +5,6 @@ from collections import deque
 
 from matching.errors.perfect_matching_error import PerfectMatchingError
 
-
 def get_perfect_matching(bipartite_graph: BipartiteGraph) -> BipartiteGraphMatching:
     """
     Находит совершенное паросочетание в двудольном графе с долями равной мощности.
@@ -23,9 +22,61 @@ def get_perfect_matching(bipartite_graph: BipartiteGraph) -> BipartiteGraphMatch
         raise TypeError(ErrorMessageEnum.WRONG_GRAPH)
     
     matching = BipartiteGraphMatching(bipartite_graph.order)
+    while not matching.is_perfect:
+        queue_left_lobe = deque()
+        history_to_restore_path_right_lobe = [-1] * matching.order
+        visited_right_lobe = [False] * matching.order
+        
+        last_vertex_alternating_chain = -1
+        flag_exit_to_main_cycle = False
 
-    ...
-    
+        tree_root = -1
+        for i in range(matching.order):
+            if not matching.is_left_covered(i):
+                tree_root = i
+                break
+        
+        if tree_root == -1:
+             raise PerfectMatchingError(ErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
+
+        queue_left_lobe.append(tree_root)
+
+        while len(queue_left_lobe) != 0:
+            current_index_left = queue_left_lobe.popleft()
+
+            for current_index_right in bipartite_graph.right_neighbors(current_index_left):
+                if not visited_right_lobe[current_index_right]:
+                    visited_right_lobe[current_index_right] = True
+                    history_to_restore_path_right_lobe[current_index_right] = current_index_left
+
+                    if matching.is_right_covered(current_index_right):
+                        next_index_left = matching.get_left_match(current_index_right)
+                        queue_left_lobe.append(next_index_left)
+                    else:
+                        last_vertex_alternating_chain = current_index_right
+                        flag_exit_to_main_cycle = True
+                        break
+            
+            if flag_exit_to_main_cycle:
+                break
+        
+        if flag_exit_to_main_cycle:
+            current_vertex_right = last_vertex_alternating_chain
+            
+            while current_vertex_right != -1:
+                current_vertex_left = history_to_restore_path_right_lobe[current_vertex_right]
+                
+                next_step_right = -1
+                if matching.is_left_covered(current_vertex_left):
+                    next_step_right = matching.get_right_match(current_vertex_left)
+                    matching.remove_edge(current_vertex_left, next_step_right)
+                
+                matching.add_edge(current_vertex_left, current_vertex_right)
+                current_vertex_right = next_step_right
+
+        else:
+            raise PerfectMatchingError(ErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
+
     return matching
 
 
