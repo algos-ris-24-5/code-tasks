@@ -21,74 +21,74 @@ def get_perfect_matching(bipartite_graph: BipartiteGraph) -> BipartiteGraphMatch
     """
     if not isinstance(bipartite_graph, BipartiteGraph):
         raise TypeError(ErrorMessageEnum.WRONG_GRAPH)
-    
+
     matching = BipartiteGraphMatching(bipartite_graph.order)
 
     for left_vertex in range(bipartite_graph.order):
-        if matching.is_left_covered(left_vertex):
-            continue
-            
         if not _bfs_augmenting_path(bipartite_graph, matching, left_vertex):
             raise PerfectMatchingError(ErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
-    
+
     return matching
 
+
 def _bfs_augmenting_path(graph: BipartiteGraph, matching: BipartiteGraphMatching, start_left: int) -> bool:
+    if matching.is_left_covered(start_left):
+        return True
+
     order = graph.order
     visited_left = [False] * order
     visited_right = [False] * order
+
     parent_left = [-1] * order
     parent_right = [-1] * order
-    
+
     queue = deque()
     queue.append(start_left)
     visited_left[start_left] = True
-    
-    while queue:
+
+    end_right = -1
+
+    while queue and end_right == -1:
         current_left = queue.popleft()
-        
+
         for right_neighbor in graph.right_neighbors(current_left):
             if visited_right[right_neighbor]:
                 continue
-                
+
             visited_right[right_neighbor] = True
-            
+            parent_left[right_neighbor] = current_left
+
             if not matching.is_right_covered(right_neighbor):
-                _augment_matching(matching, current_left, right_neighbor, 
-                                parent_left, parent_right)
-                return True
-            else:
-                matched_left = matching.get_left_match(right_neighbor)
-                if not visited_left[matched_left]:
-                    visited_left[matched_left] = True
-                    parent_left[matched_left] = current_left
-                    parent_right[matched_left] = right_neighbor
-                    queue.append(matched_left)
-    
-    return False
+                end_right = right_neighbor
+                break
+
+            matched_left = matching.get_left_match(right_neighbor)
+            if not visited_left[matched_left]:
+                visited_left[matched_left] = True
+                parent_right[matched_left] = right_neighbor
+                queue.append(matched_left)
+
+    if end_right == -1:
+        return False
+
+    _augment_matching(matching, start_left, end_right, parent_left, parent_right)
+    return True
 
 
 def _augment_matching(matching: BipartiteGraphMatching, start_left: int, end_right: int,
-                     parent_left: list, parent_right: list) -> None:
-    current_left = start_left
+                      parent_left: list, parent_right: list) -> None:
     current_right = end_right
-    
-    while True:
+
+    while current_right != -1:
+        current_left = parent_left[current_right]
+
+        if matching.is_left_covered(current_left):
+            old_right = matching.get_right_match(current_left)
+            matching.remove_edge(current_left, old_right)
+
         matching.add_edge(current_left, current_right)
-        
-        if parent_left[current_left] == -1:
-            break
-            
-        prev_right = parent_right[current_left]
-        prev_left = parent_left[current_left]
-        
-        matching.remove_edge(prev_left, prev_right)
-        
-        current_left = prev_left
-        current_right = prev_right
 
-
-
+        current_right = parent_right[current_left] if current_left != start_left else -1
 
 
 if __name__ == "__main__":
