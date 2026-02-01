@@ -20,6 +20,7 @@ def get_tree(bipartite_graph, matching, order):
                 queue.append(matched_left)
             elif matched_left == -1:
                 found = True
+                return levels, found
     return levels, found
 
 def find_chain(bipartite_graph, matching, current_left, levels, visited):
