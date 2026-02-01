@@ -17,13 +17,59 @@ def get_max_matching(bipartite_graph: BipartiteGraph) -> BipartiteGraphMatching:
     :param bipartite_graph: Двудольный граф, заданный списками смежности левой доли.
     :return: Объект BipartiteGraphMatching, представляющий максимальное паросочетание.
     """
+    
     if not isinstance(bipartite_graph, BipartiteGraph):
         raise TypeError(ErrorMessageEnum.WRONG_GRAPH)
     
-    matching = BipartiteGraphMatching(bipartite_graph.order)
-
-    ...
+    order = bipartite_graph.order
+    matching = BipartiteGraphMatching(order)
     
+    def get_tree():
+        levels = [-1] * order
+        queue = deque()
+        for current_left in range(order):
+            if not matching.is_left_covered(current_left):
+                levels[current_left] = 0
+                queue.append(current_left)
+        found = False
+        while queue:
+            current_left = queue.popleft()
+            for neighbor_of_left in bipartite_graph.right_neighbors(current_left):
+                matched_left = matching.get_left_match(neighbor_of_left)
+                if matched_left != -1 and levels[matched_left] == -1:
+                    levels[matched_left] = levels[current_left] + 1
+                    queue.append(matched_left)
+                elif matched_left == -1:
+                    found = True
+        return levels, found
+
+    def find_chain(current_left, levels, visited):
+        visited[current_left] = True
+        for neighbor_of_left in bipartite_graph.right_neighbors(current_left):
+            matched_left = matching.get_left_match(neighbor_of_left)
+            if matched_left == -1:
+                return [(current_left, neighbor_of_left)]
+            elif not visited[matched_left] and levels[matched_left] == levels[current_left] + 1:
+                path = find_chain(matched_left, levels, visited)
+                if path is not None:
+                    path.append((current_left, neighbor_of_left))
+                    return path
+        return None
+
+    while True:
+        levels, found = get_tree()
+        if not found:
+            break
+        for current_left in range(order):
+            if not matching.is_left_covered(current_left):
+                visited = [False] * order
+                path = find_chain(current_left, levels, visited)
+                if path:
+                    for left, right in reversed(path):
+                        matched_left = matching.get_left_match(right)
+                        if matched_left != -1:
+                            matching.remove_edge(matched_left, right)
+                        matching.add_edge(left, right)
     return matching
 
 
