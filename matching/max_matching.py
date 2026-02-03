@@ -21,10 +21,77 @@ def get_max_matching(bipartite_graph: BipartiteGraph) -> BipartiteGraphMatching:
         raise TypeError(ErrorMessageEnum.WRONG_GRAPH)
     
     matching = BipartiteGraphMatching(bipartite_graph.order)
-
-    ...
+    
+    while True:
+        chain_result = _find_alternating_chain(bipartite_graph, matching)
+        if chain_result is None:
+            break
+        
+        chain_end_vertex, left_predecessor, right_predecessor = chain_result
+        
+        edges_to_remove = []
+        edges_to_add = []
+        
+        current_right = chain_end_vertex
+        while current_right is not None:
+            current_left = right_predecessor[current_right]
+            edges_to_add.append((current_left, current_right))
+            
+            if current_left in left_predecessor and left_predecessor[current_left] is not None:
+                previous_right = left_predecessor[current_left]
+                edges_to_remove.append((current_left, previous_right))
+                current_right = previous_right
+            else:
+                current_right = None
+        
+        for left_vertex, right_vertex in edges_to_remove:
+            matching.remove_edge(left_vertex, right_vertex)
+        
+        for left_vertex, right_vertex in edges_to_add:
+            matching.add_edge(left_vertex, right_vertex)
     
     return matching
+
+
+def _find_alternating_chain(bipartite_graph, matching):
+    """
+    Ищет чередующуюся цепь с помощью волнового метода.
+    Возвращает кортеж (конечная_свободная_вершина, предшественники_левых, предшественники_правых)
+    или None, если цепь не найдена.
+    """
+    wave_queue = deque()
+    left_predecessor = {}
+    right_predecessor = {}
+    visited_left_vertices = set()
+    visited_right_vertices = set()
+    graph_order = bipartite_graph.order
+    
+    for left_vertex in range(graph_order):
+        if not matching.is_left_covered(left_vertex):
+            wave_queue.append(left_vertex)
+            visited_left_vertices.add(left_vertex)
+            left_predecessor[left_vertex] = None
+    
+    while wave_queue:
+        current_left = wave_queue.popleft()
+        
+        for current_right in bipartite_graph.right_neighbors(current_left):
+            if current_right in visited_right_vertices:
+                continue
+            
+            visited_right_vertices.add(current_right)
+            right_predecessor[current_right] = current_left
+            
+            if not matching.is_right_covered(current_right):
+                return current_right, left_predecessor, right_predecessor
+            
+            next_left = matching.get_left_match(current_right)
+            if next_left not in visited_left_vertices:
+                visited_left_vertices.add(next_left)
+                left_predecessor[next_left] = current_right
+                wave_queue.append(next_left)
+    
+    return None
 
 
 if __name__ == "__main__":
