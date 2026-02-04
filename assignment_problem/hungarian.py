@@ -13,11 +13,16 @@ def hungarian(matrix: list[list[int | float]]) -> BipartiteGraphMatching:
     :return: Матрица смежности, где ``True`` означает включение ребра в паросочетание.
     :rtype: list[list[bool]]
     """
+    if not matrix or not matrix[0]:
+        return BipartiteGraphMatching(0)
+
     order = len(matrix)
-    matching = BipartiteGraphMatching(order)
+    if any(len(row) != order for row in matrix):
+        raise ValueError("Матрица должна быть квадратной")
+
     reduced_matrix = get_reduced_matrix(matrix)
-    bipartite_graph = _get_bipartite_graph_by_zeros(reduced_matrix)
-    
+    matching = BipartiteGraphMatching(order)
+
     _build_perfect_matching(reduced_matrix, matching)
 
     return matching
@@ -61,27 +66,18 @@ def _build_perfect_matching(reduced_matrix: list[list[int | float]], matching: B
         if root is None:
             break
 
-        while True:
-            bipartite_graph = _get_bipartite_graph_by_zeros(reduced_matrix)
-            (
-                found,
-                free_right,
-                left_visited,
-                right_visited,
-                parent_right,
-            ) = _find_augmenting_path(bipartite_graph, matching, root)
+        bipartite_graph = _get_bipartite_graph_by_zeros(reduced_matrix)
+        found, free_right, left_visited, right_visited, parent_right = _find_augmenting_path(
+            bipartite_graph, matching, root
+        )
 
-            if found:
-                _augment_matching(matching, parent_right, free_right)
-                break
-
+        if found:
+            _augment_matching(matching, parent_right, free_right)
+        else:
             delta = _min_uncovered_value(reduced_matrix, left_visited, right_visited)
             if delta == float("inf"):
                 raise ValueError(MatchingErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
             _adjust_matrix(reduced_matrix, left_visited, right_visited, delta)
-
-    if not matching.is_perfect:
-        raise ValueError(MatchingErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
 
 
 def _find_free_left_vertex(matching: BipartiteGraphMatching) -> int | None:
