@@ -47,9 +47,17 @@ def _bfs_augment(graph: BipartiteGraph, matching: BipartiteGraphMatching):
     visited_rows = set()
     visited_cols = set()
 
-    left_front = deque([row_index for row_index in range(order) if not matching.is_left_covered(row_index)])
-    visited_rows.update(left_front)
+    start_row = None
+    for row_index in range(order):
+        if not matching.is_left_covered(row_index):
+            start_row = row_index
+            break
 
+    if start_row is None:
+        return False, visited_rows, visited_cols
+
+    left_front = deque([start_row])
+    visited_rows.add(start_row)
     right_front = deque()
 
     while left_front or right_front:
@@ -61,7 +69,7 @@ def _bfs_augment(graph: BipartiteGraph, matching: BipartiteGraphMatching):
                     parent[current_col] = current_row
                     if not matching.is_right_covered(current_col):
                         _apply_path(matching, parent, current_col)
-                        return True, visited_rows, visited_cols
+                        return True, None, None
                     right_front.append(current_col)
 
         while right_front:
@@ -91,11 +99,8 @@ def _diagonal_reduction(matrix: list[list[int | float]], visited_rows: set, visi
 
     for row_index in visited_rows:
         for col_index in range(order):
-            if col_index not in visited_cols and matrix[row_index][col_index] < delta:
-                delta = matrix[row_index][col_index]
-
-    if delta == float('inf') or delta == 0:
-        return
+            if col_index not in visited_cols:
+                delta = min(delta, matrix[row_index][col_index])
 
     for row_index in range(order):
         for col_index in range(order):
