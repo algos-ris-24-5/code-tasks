@@ -21,12 +21,77 @@ def get_perfect_matching(bipartite_graph: BipartiteGraph) -> BipartiteGraphMatch
     """
     if not isinstance(bipartite_graph, BipartiteGraph):
         raise TypeError(ErrorMessageEnum.WRONG_GRAPH)
-    
-    matching = BipartiteGraphMatching(bipartite_graph.order)
 
-    ...
+    node_count = bipartite_graph.order
+    result_matching = BipartiteGraphMatching(node_count)
+
+    for left_node_idx in range(node_count):
+        
+        if result_matching.is_left_covered(left_node_idx):
+            continue
+
+        success = _try_build_chain(left_node_idx, bipartite_graph, result_matching)
+
+        if not success:
+            raise PerfectMatchingError("Совершенное паросочетание не найдено")
+
+    if result_matching.cardinality != node_count:
+        raise PerfectMatchingError(ErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
+
+    return result_matching
+
+
+def _try_build_chain(start_node: int, graph: BipartiteGraph, matching: BipartiteGraphMatching) -> bool:
+
+    order = graph.order
+    links_to_parents = [-1] * order
+    queue = deque([start_node])
+    target_right_node = -1
+
+    while queue:
+        current_left = queue.popleft()
+        neighbors = graph.right_neighbors(current_left)
+        
+        for right_candidate in neighbors:
+            if links_to_parents[right_candidate] != -1:
+                continue
+            
+            links_to_parents[right_candidate] = current_left
+            
+            if not matching.is_right_covered(right_candidate):
+                target_right_node = right_candidate
+                break
+
+            else:
+                next_left = matching.get_left_match(right_candidate)
+                queue.append(next_left)
+        
+        if target_right_node != -1:
+            break
     
-    return matching
+    if target_right_node != -1:
+        _apply_inversion(target_right_node, links_to_parents, matching)
+        return True
+        
+    return False
+
+
+def _apply_inversion(end_node: int, links: list, matching: BipartiteGraphMatching) -> None:
+
+    current_right = end_node
+    
+    while True:
+        parent_left = links[current_right]
+        
+        if matching.is_left_covered(parent_left):
+            prev_match_right = matching.get_right_match(parent_left)
+            matching.remove_edge(parent_left, prev_match_right)
+            matching.add_edge(parent_left, current_right)
+            current_right = prev_match_right
+        
+        else:
+            matching.add_edge(parent_left, current_right)
+            break
 
 
 if __name__ == "__main__":
