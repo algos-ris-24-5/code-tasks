@@ -2,7 +2,7 @@ from collections import deque
 
 from matching.bipartite_graph import BipartiteGraph
 from matching.bipartite_graph_matching import BipartiteGraphMatching
-
+from matching.errors.error_message_enum import ErrorMessageEnum as MatchingErrorMessageEnum
 
 def hungarian(matrix: list[list[int | float]]) -> BipartiteGraphMatching:
     """
@@ -17,11 +17,10 @@ def hungarian(matrix: list[list[int | float]]) -> BipartiteGraphMatching:
     matching = BipartiteGraphMatching(order)
     reduced_matrix = get_reduced_matrix(matrix)
     bipartite_graph = _get_bipartite_graph_by_zeros(reduced_matrix)
-       
-    ...
+    
+    _build_perfect_matching(reduced_matrix, matching)
 
     return matching
-
 
 def _get_bipartite_graph_by_zeros(reduced_matrix: list[list[int | float]]) -> BipartiteGraph:
     adjacency_lists = {}
@@ -50,6 +49,116 @@ def get_reduced_matrix(matrix: list[list[int | float]]) -> list[list[int | float
             reduced_matrix[row_idx][col_idx] -= min_col_value
 
     return reduced_matrix
+
+
+def _build_perfect_matching(reduced_matrix: list[list[int | float]], matching: BipartiteGraphMatching) -> None:
+    order = matching.order
+    if order == 0:
+        return
+
+    while not matching.is_perfect:
+        root = _find_free_left_vertex(matching)
+        if root is None:
+            break
+
+        while True:
+            bipartite_graph = _get_bipartite_graph_by_zeros(reduced_matrix)
+            (
+                found,
+                free_right,
+                left_visited,
+                right_visited,
+                parent_right,
+            ) = _find_augmenting_path(bipartite_graph, matching, root)
+
+            if found:
+                _augment_matching(matching, parent_right, free_right)
+                break
+
+            delta = _min_uncovered_value(reduced_matrix, left_visited, right_visited)
+            if delta == float("inf"):
+                raise ValueError(MatchingErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
+            _adjust_matrix(reduced_matrix, left_visited, right_visited, delta)
+
+    if not matching.is_perfect:
+        raise ValueError(MatchingErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
+
+
+def _find_free_left_vertex(matching: BipartiteGraphMatching) -> int | None:
+    for idx in range(matching.order):
+        if not matching.is_left_covered(idx):
+            return idx
+    return None
+
+
+def _find_augmenting_path(bipartite_graph: BipartiteGraph, matching: BipartiteGraphMatching, root: int) -> tuple[bool, int | None, list[bool], list[bool], list[int]]:
+    order = matching.order
+    left_visited = [False] * order
+    right_visited = [False] * order
+    parent_right = [-1] * order
+
+    queue = deque([root])
+    left_visited[root] = True
+
+    while queue:
+        left_vertex = queue.popleft()
+        for right_vertex in bipartite_graph.right_neighbors(left_vertex):
+            if right_visited[right_vertex]:
+                continue
+            right_visited[right_vertex] = True
+            parent_right[right_vertex] = left_vertex
+            matched_left = matching.get_left_match(right_vertex)
+            if matched_left == -1:
+                return True, right_vertex, left_visited, right_visited, parent_right
+            if not left_visited[matched_left]:
+                left_visited[matched_left] = True
+                queue.append(matched_left)
+
+    return False, None, left_visited, right_visited, parent_right
+
+
+def _augment_matching(matching: BipartiteGraphMatching, parent_right: list[int], free_right: int | None) -> None:
+    if free_right is None:
+        return
+
+    right_vertex = free_right
+    while right_vertex != -1:
+        left_vertex = parent_right[right_vertex]
+        previous_right = matching.get_right_match(left_vertex)
+        if previous_right != -1:
+            matching.remove_edge(left_vertex, previous_right)
+        matching.add_edge(left_vertex, right_vertex)
+        right_vertex = previous_right
+
+
+def _min_uncovered_value(reduced_matrix: list[list[int | float]], left_visited: list[bool], right_visited: list[bool]) -> float:
+    order = len(reduced_matrix)
+    min_value = float("inf")
+    # минимум на множестве
+    for row_idx in range(order):
+        if not left_visited[row_idx]:
+            continue
+        row = reduced_matrix[row_idx]
+        for col_idx in range(order):
+            if right_visited[col_idx]:
+                continue
+            if row[col_idx] < min_value:
+                min_value = row[col_idx]
+    return min_value
+
+
+def _adjust_matrix(reduced_matrix: list[list[int | float]], left_visited: list[bool], right_visited: list[bool], delta: float) -> None:
+    order = len(reduced_matrix)
+    # диагональная редукция
+    for row_idx in range(order):
+        if left_visited[row_idx]:
+            row = reduced_matrix[row_idx]
+            for col_idx in range(order):
+                row[col_idx] -= delta
+    for col_idx in range(order):
+        if right_visited[col_idx]:
+            for row_idx in range(order):
+                reduced_matrix[row_idx][col_idx] += delta
 
 if __name__ == "__main__":
     matrix = [
