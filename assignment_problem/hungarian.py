@@ -66,18 +66,24 @@ def _build_perfect_matching(reduced_matrix: list[list[int | float]], matching: B
         if root is None:
             break
 
-        bipartite_graph = _get_bipartite_graph_by_zeros(reduced_matrix)
-        found, free_right, left_visited, right_visited, parent_right = _find_augmenting_path(
-            bipartite_graph, matching, root
-        )
+        while True:
+            bipartite_graph = _get_bipartite_graph_by_zeros(reduced_matrix)
+            found, free_right, left_visited, right_visited, parent_right = _find_augmenting_path(
+                bipartite_graph, matching, root
+            )
 
-        if found:
-            _augment_matching(matching, parent_right, free_right)
-        else:
+            
+            if found:
+                _augment_matching(matching, parent_right, free_right)
+                break
+            
             delta = _min_uncovered_value(reduced_matrix, left_visited, right_visited)
             if delta == float("inf"):
                 raise ValueError(MatchingErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
             _adjust_matrix(reduced_matrix, left_visited, right_visited, delta)
+
+    if not matching.is_perfect:
+        raise ValueError(MatchingErrorMessageEnum.NOT_EXISTED_PERFECT_MATCH)
 
 
 def _find_free_left_vertex(matching: BipartiteGraphMatching) -> int | None:
@@ -130,7 +136,7 @@ def _augment_matching(matching: BipartiteGraphMatching, parent_right: list[int],
 def _min_uncovered_value(reduced_matrix: list[list[int | float]], left_visited: list[bool], right_visited: list[bool]) -> float:
     order = len(reduced_matrix)
     min_value = float("inf")
-    # минимум на множестве
+
     for row_idx in range(order):
         if not left_visited[row_idx]:
             continue
@@ -145,7 +151,7 @@ def _min_uncovered_value(reduced_matrix: list[list[int | float]], left_visited: 
 
 def _adjust_matrix(reduced_matrix: list[list[int | float]], left_visited: list[bool], right_visited: list[bool], delta: float) -> None:
     order = len(reduced_matrix)
-    # диагональная редукция
+
     for row_idx in range(order):
         if left_visited[row_idx]:
             row = reduced_matrix[row_idx]
