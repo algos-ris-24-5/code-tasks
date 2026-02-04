@@ -18,7 +18,7 @@ def hungarian(matrix: list[list[int | float]]) -> BipartiteGraphMatching:
     order = len(matrix)
     matching = BipartiteGraphMatching(order)
     reduced_matrix = get_reduced_matrix(matrix)
-       
+
     while not matching.is_perfect:
         bipartite_graph = _get_bipartite_graph_by_zeros(reduced_matrix)
         augmented, visited_rows, visited_cols = _bfs_augment(bipartite_graph, matching)
@@ -28,13 +28,13 @@ def hungarian(matrix: list[list[int | float]]) -> BipartiteGraphMatching:
 
     return matching
 
+
 def _validate_matrix(matrix):
     if not matrix or not all(isinstance(row, list) for row in matrix):
         raise ValueError("Передана некорректная матрица")
-    
-    order = len(matrix)
+
     for row in matrix:
-        if len(row) != order:
+        if len(row) != len(matrix):
             raise ValueError("Передана некорректная матрица")
         for value in row:
             if value is None or isinstance(value, (str, list)) or value < 0 or not isinstance(value, (int, float)):
@@ -47,43 +47,40 @@ def _bfs_augment(graph: BipartiteGraph, matching: BipartiteGraphMatching):
     visited_rows = set()
     visited_cols = set()
 
-    current_front_rows = []
-    for row_index in range(order):
-        if not matching.is_left_covered(row_index):
-            current_front_rows.append(row_index)
-            visited_rows.add(row_index)
+    left_front = deque([row_index for row_index in range(order) if not matching.is_left_covered(row_index)])
+    visited_rows.update(left_front)
 
-    while current_front_rows:
-        next_front_cols = []
-        for row_index in current_front_rows:
-            for col_index in graph.right_neighbors(row_index):
-                if col_index not in visited_cols:
-                    visited_cols.add(col_index)
-                    parent[col_index] = row_index
-                    next_front_cols.append(col_index)
+    right_front = deque()
 
-                    if not matching.is_right_covered(col_index):
-                        _apply_path(matching, parent, col_index)
-                        return True, set(), set()
+    while left_front or right_front:
+        while left_front:
+            current_row = left_front.popleft()
+            for current_col in graph.right_neighbors(current_row):
+                if current_col not in visited_cols:
+                    visited_cols.add(current_col)
+                    parent[current_col] = current_row
+                    if not matching.is_right_covered(current_col):
+                        _apply_path(matching, parent, current_col)
+                        return True, visited_rows, visited_cols
+                    right_front.append(current_col)
 
-        current_front_rows = []
-        for col_index in next_front_cols:
-            matched_row = matching.get_left_match(col_index)
+        while right_front:
+            current_col = right_front.popleft()
+            matched_row = matching.get_left_match(current_col)
             if matched_row != -1 and matched_row not in visited_rows:
                 visited_rows.add(matched_row)
-                current_front_rows.append(matched_row)
+                left_front.append(matched_row)
 
     return False, visited_rows, visited_cols
+
 
 def _apply_path(matching: BipartiteGraphMatching, parent: dict, last_col: int):
     current_col = last_col
     while current_col in parent:
         current_row = parent[current_col]
-        if matching.is_left_covered(current_row):
-            old_col = matching.get_right_match(current_row)
+        old_col = matching.get_right_match(current_row)
+        if old_col != -1:
             matching.remove_edge(current_row, old_col)
-        else:
-            old_col = None
         matching.add_edge(current_row, current_col)
         current_col = old_col
 
@@ -106,6 +103,7 @@ def _diagonal_reduction(matrix: list[list[int | float]], visited_rows: set, visi
                 matrix[row_index][col_index] -= delta
             if col_index in visited_cols:
                 matrix[row_index][col_index] += delta
+
 
 def _get_bipartite_graph_by_zeros(reduced_matrix: list[list[int | float]]) -> BipartiteGraph:
     adjacency_lists = {}
@@ -134,6 +132,7 @@ def get_reduced_matrix(matrix: list[list[int | float]]) -> list[list[int | float
             reduced_matrix[row_idx][col_idx] -= min_col_value
 
     return reduced_matrix
+
 
 if __name__ == "__main__":
     matrix = [
