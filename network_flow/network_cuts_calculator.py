@@ -26,8 +26,23 @@ class NetworkCutsCalculator:
         format_mask = "{0:0" + str(transit_cnt) + "b}"
 
         cuts = []
-        ...
+        for mask in range(2 ** transit_cnt):
+            binary_str = format_mask.format(mask)
+            
+            source_set = {source_idx}
+            sink_set = {sink_idx}
 
+            for bit_value, vertex_idx in zip(binary_str, transit_idxs):
+                if bit_value == '1':
+                    source_set.add(vertex_idx)
+                else:
+                    sink_set.add(vertex_idx)
+
+            capacity = NetworkCutsCalculator._get_cut_capacity(
+                source_set, sink_set, capacity_matrix
+            )
+            cuts.append(NetworkCutData(source_set, sink_set, capacity))
+            
         return cuts
 
     @staticmethod
@@ -50,7 +65,11 @@ class NetworkCutsCalculator:
 
     @staticmethod
     def _get_cut_capacity(source_vertices, sink_vertices, matrix):
-        ...
+        capacity = 0
+        for from_vertex_idx in source_vertices:
+            for to_vertex_idx in sink_vertices:
+                capacity += matrix[from_vertex_idx][to_vertex_idx]
+        return capacity
     
     @staticmethod
     def split_vertices_by_types(matrix) -> NetworkVerticesData:
@@ -63,11 +82,23 @@ class NetworkCutsCalculator:
         :rtype: NetworkVerticesData
         """
         sources = []
-        ...
         sinks = []
-        ...
         transits = []
-        ...
+
+        vertex_count = len(matrix)
+        for vertex_idx in range(vertex_count):
+            incoming_degree = sum(matrix[other_vertex_idx][vertex_idx] for other_vertex_idx in range(vertex_count))
+            outgoing_degree = sum(matrix[vertex_idx][other_vertex_idx] for other_vertex_idx in range(vertex_count))
+
+            is_source = (incoming_degree == 0)
+            is_sink = (outgoing_degree == 0)
+
+            if is_source:
+                sources.append(vertex_idx)
+            if is_sink:
+                sinks.append(vertex_idx)
+            if not is_source and not is_sink:
+                transits.append(vertex_idx)
 
         return NetworkVerticesData(sources, sinks, transits)
 
