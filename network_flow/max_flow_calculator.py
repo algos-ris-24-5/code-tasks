@@ -30,7 +30,7 @@ class MaxFlowCalculator:
         for row_idx in range(self._order):
             for col_idx in range(self._order):
                 if capacity_matrix[row_idx][col_idx]:
-                    self._residual_matrix[col_idx][row_idx] = self._capacity_matrix[
+                    self._residual_matrix[row_idx][col_idx] = self._capacity_matrix[
                         row_idx
                     ][col_idx]
 
@@ -60,32 +60,81 @@ class MaxFlowCalculator:
         :rtype: NetworkVerticesData
         """
         sources = []
-        ...
-
         sinks = []
-        ...
-
         transits = []
-        ...
+
+        order = len(matrix)
+        for i in range(order):
+            is_source = all(matrix[j][i] == 0 for j in range(order))
+            is_sink = all(matrix[i][j] == 0 for j in range(order))
+
+            if is_source:
+                sources.append(i)
+            elif is_sink:
+                sinks.append(i)
+            else:
+                transits.append(i)
 
         return NetworkVerticesData(sources, sinks, transits)
 
     def _calculate_max_flow(self) -> None:
         """Вычисляет максимальный поток в сети с использованием алгоритма Форда-Фалкерсона"""
-        ...
+        self._flow_matrix = [[0] * self._order for _ in range(self._order)]
+        self._max_flow = 0
+
+        while True:
+            augmenting_path = self._find_augmenting_path()
+            if not augmenting_path:
+                break
+            
+            self._increase_flow(augmenting_path)
+
+        self._set_flow_matrix_by_residual_matrix()
 
     def _set_flow_matrix_by_residual_matrix(self):
         """Обновляет матрицу локальных потоков на основе остаточной сети"""
-        ...
+        for i in range(self._order):
+            for j in range(self._order):
+                if self._capacity_matrix[i][j] > 0:
+                    self._flow_matrix[i][j] = (
+                        self._capacity_matrix[i][j] - self._residual_matrix[i][j]
+                    )
 
     def _find_augmenting_path(self):
         """Возвращает найденный увеличивающий путь в сети"""
-        ...
+        parent = [-1] * self._order
+        queue = deque([self._source_idx])
+        parent[self._source_idx] = self._source_idx
+
+        while queue:
+            u = queue.popleft()
+            if u == self._sink_idx:
+                path = []
+                curr = self._sink_idx
+                while curr != self._source_idx:
+                    prev = parent[curr]
+                    path.append((prev, curr))
+                    curr = prev
+                return path[::-1]
+
+            for v in range(self._order):
+                if parent[v] == -1 and self._residual_matrix[u][v] > 0:
+                    parent[v] = u
+                    queue.append(v)
+        return None
 
     def _increase_flow(self, augmenting_path):
         """Корректирует остаточную сеть для увеличения потока в сети с использованием
         найденного увеличивающего пути"""
-        ...
+        path_flow = self._residual_matrix[augmenting_path[0][0]][augmenting_path[0][1]]
+        for u, v in augmenting_path:
+            path_flow = min(path_flow, self._residual_matrix[u][v])
+
+        for u, v in augmenting_path:
+            self._residual_matrix[u][v] -= path_flow
+            self._residual_matrix[v][u] += path_flow
+        
+        self._max_flow += path_flow
 
 
 if __name__ == "__main__":
