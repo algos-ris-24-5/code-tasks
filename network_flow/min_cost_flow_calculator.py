@@ -36,6 +36,7 @@ class MinCostFlowCalculator(MaxFlowCalculator):
         self._cost_matrix = cost_matrix
         self._residual_matrix, self._cost_residual_matrix = (
             self._get_residual_matrices()
+            
         )
         self._minimize_cost()
         self._min_cost = self._get_cost_by_flow()
@@ -54,11 +55,9 @@ class MinCostFlowCalculator(MaxFlowCalculator):
             try:
                 negative_loop = self._find_negative_loop(0)
                 self._remove_negative_loop(negative_loop)
-            except NegativeLoopNotFoundError:
+            except NegativeLoopNotFoundError as e:
                 break
-        self._residual_matrix, self._cost_residual_matrix = (
-            self._get_residual_matrices()
-        )
+        
         self._min_cost = self._get_cost_by_flow()
 
 
@@ -66,13 +65,15 @@ class MinCostFlowCalculator(MaxFlowCalculator):
         """Возвращает найденный цикл отрицательной стоимости в остаточной сети
         стоимости транспортировки"""
         try:
-            matrix, parents_matrix = bellman_ford(self._cost_residual_matrix, 1)
+            matrix, parents_matrix = bellman_ford(self._cost_residual_matrix, start_vertex_idx)
             raise NegativeLoopNotFoundError()
         except NegativeLoopBellmanFordError as e:
             parents_matrix = e.predecessors
             v = e.last_updated_vertex_idx
             current = v
             for _ in range(self._order):
+                if current is None:
+                    raise NegativeLoopNotFoundError()
                 current = parents_matrix[current]
             start_node = current
             negative_loop = [current]
@@ -81,6 +82,7 @@ class MinCostFlowCalculator(MaxFlowCalculator):
                 negative_loop.append(next_node)
                 next_node = parents_matrix[next_node]
             negative_loop.append(current)
+            negative_loop.reverse()
         return negative_loop
 
     def _remove_negative_loop(self, loop) -> None:
@@ -88,9 +90,25 @@ class MinCostFlowCalculator(MaxFlowCalculator):
         min_capacity = inf
         for i in range(len(loop) - 1):
             min_capacity = min(min_capacity, self._residual_matrix[loop[i]][loop[i + 1]])
+        
         for i in range(len(loop) - 1):
-            if self._capacity_matrix[loop[i + 1]][loop[i]] > 0: self._flow_matrix[loop[i + 1]][loop[i]] -= min_capacity
-            else: self._flow_matrix[loop[i]][loop[i + 1]] += min_capacity
+            
+            current = loop[i]
+            next = loop[i + 1]
+            
+            if self._residual_matrix[next][current] == 0:
+                self._cost_residual_matrix[next][current] = -self._cost_residual_matrix[current][next]
+            
+            self._residual_matrix[current][next] -= min_capacity
+            self._residual_matrix[next][current] += min_capacity
+            
+            if self._residual_matrix[current][next] == 0:
+                self._cost_residual_matrix[current][next] = 0
+            
+            if self._capacity_matrix[current][next] > 0:
+                self._flow_matrix[current][next] -= min_capacity
+            else:
+                self._flow_matrix[next][current] += min_capacity
 
     def _get_residual_matrices(self):
         """Возвращает остаточные сети, созданные на основе матриц
@@ -128,23 +146,19 @@ class MinCostFlowCalculator(MaxFlowCalculator):
 
 if __name__ == "__main__":
     capacity_matrix = [
-        # s a  b  c  d  t
-        [0, 7, 7, 7, 0, 0],  # s
-        [0, 0, 0, 6, 9, 0],  # a
-        [0, 6, 0, 5, 0, 0],  # b
-        [0, 0, 0, 0, 11, 0],  # c
-        [0, 0, 0, 0, 0, 13],  # d
-        [0, 0, 0, 0, 0, 0],  # t
-    ]
+            # s a  b  t
+            [0, 2, 1, 0],  # s
+            [0, 0, 1, 3],  # a
+            [0, 0, 0, 3],  # b
+            [0, 0, 0, 0],  # t
+        ]
     cost_matrix = [
-        # s a  b  c  d  t
-        [0, 3, 2, 4, 0, 0],  # s
-        [0, 0, 0, 4, 5, 0],  # a
-        [0, 2, 0, 2, 0, 0],  # b
-        [0, 0, 0, 0, 2, 0],  # c
-        [0, 0, 0, 0, 0, 1],  # d
-        [0, 0, 0, 0, 0, 0],  # t
-    ]
+            # s a  b  t
+            [0, 1, 1, 0],  # s
+            [0, 0, 1, 5],  # a
+            [0, 0, 0, 1],  # b
+            [0, 0, 0, 0],  # t
+        ]
     print("Матрица пропускной способности")
     for row in capacity_matrix:
         print(row)
