@@ -7,9 +7,13 @@ from shortest_path.bellman_ford import (
     bellman_ford,
     restore_path,
 )
-from shortest_path.floyd_warshall import NegativeLoopFloydWarshallError, floyd_warshall
+from shortest_path.floyd_warshall import NegativeLoopFloydWarshallError, floyd_warshall, get_shortest_path
 
 COST_MATRIX_NAME = "Таблица стоимости транспортировки"
+
+class NegativeLoopNotFoundError(Exception):
+    def __init__(self):
+        super().__init__("Граф не содержит отрицательных циклов")
 
 
 class MinCostFlowCalculator(MaxFlowCalculator):
@@ -46,17 +50,47 @@ class MinCostFlowCalculator(MaxFlowCalculator):
         посредством поиска и удаления отрицательных циклов в остаточной сети.
         После удаления всех циклов обновляет матрицу локальных потоков
         на основе остаточной сети."""
-        pass
+        while True:
+            try:
+                negative_loop = self._find_negative_loop(0)
+                self._remove_negative_loop(negative_loop)
+            except NegativeLoopNotFoundError:
+                break
+        self._residual_matrix, self._cost_residual_matrix = (
+            self._get_residual_matrices()
+        )
+        self._min_cost = self._get_cost_by_flow()
+
 
     def _find_negative_loop(self, start_vertex_idx) -> list[int]:
         """Возвращает найденный цикл отрицательной стоимости в остаточной сети
         стоимости транспортировки"""
-        pass
+        try:
+            matrix, parents_matrix = bellman_ford(self._cost_residual_matrix, 1)
+            raise NegativeLoopNotFoundError()
+        except NegativeLoopBellmanFordError as e:
+            parents_matrix = e.predecessors
+            v = e.last_updated_vertex_idx
+            current = v
+            for _ in range(self._order):
+                current = parents_matrix[current]
+            start_node = current
+            negative_loop = [current]
+            next_node = parents_matrix[current]
+            while start_node != next_node:
+                negative_loop.append(next_node)
+                next_node = parents_matrix[next_node]
+            negative_loop.append(current)
+        return negative_loop
 
     def _remove_negative_loop(self, loop) -> None:
         """Удаляет цикл отрицательной стоимости в остаточных сетях потоков и стоимостей."""
-        
-        pass
+        min_capacity = inf
+        for i in range(len(loop) - 1):
+            min_capacity = min(min_capacity, self._residual_matrix[loop[i]][loop[i + 1]])
+        for i in range(len(loop) - 1):
+            if self._capacity_matrix[loop[i + 1]][loop[i]] > 0: self._flow_matrix[loop[i + 1]][loop[i]] -= min_capacity
+            else: self._flow_matrix[loop[i]][loop[i + 1]] += min_capacity
 
     def _get_residual_matrices(self):
         """Возвращает остаточные сети, созданные на основе матриц
@@ -86,8 +120,11 @@ class MinCostFlowCalculator(MaxFlowCalculator):
     def _get_cost_by_flow(self) -> int:
         """Возвращает суммарную стоимость транспортировки на основе матрицы локальных потоков
         и матрицы стоимостей"""
-        pass
-
+        cost = 0
+        for i in range(self._order):
+            for j in range(self._order):
+                cost += self._flow_matrix[i][j] * self._cost_matrix[i][j]
+        return cost
 
 if __name__ == "__main__":
     capacity_matrix = [
