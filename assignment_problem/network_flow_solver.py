@@ -42,13 +42,36 @@ def get_min_cost_perfect_matching(assignment_matrix: list[list[int | float]]) ->
     :return: Совершенное паросочетание с минимальной стоимостью.
     :rtype: BipartiteGraphMatching
     """
-    capacity_matrix: list[list[int]] = ...
-    cost_matrix: list[list[int]] = ...
+    matrix_size = len(assignment_matrix)
+    
+    total_vertices = 2 * matrix_size + 2
+    source_vertex = 0
+    sink_vertex = 2 * matrix_size + 1
+    
+    capacity_matrix: list[list[int]] = [[0] * total_vertices for _ in range(total_vertices)]
+    cost_matrix: list[list[int]] = [[0] * total_vertices for _ in range(total_vertices)]
+    
+    for executor_index in range(matrix_size):
+        capacity_matrix[source_vertex][executor_index + 1] = 1
+        cost_matrix[source_vertex][executor_index + 1] = 0
+    
+    for executor_index in range(matrix_size):
+        for task_index in range(matrix_size):
+            capacity_matrix[executor_index + 1][matrix_size + 1 + task_index] = 1
+            cost_matrix[executor_index + 1][matrix_size + 1 + task_index] = int(assignment_matrix[executor_index][task_index] * 1000)
+    
+    for task_index in range(matrix_size):
+        capacity_matrix[matrix_size + 1 + task_index][sink_vertex] = 1
+        cost_matrix[matrix_size + 1 + task_index][sink_vertex] = 0
 
     calculator = MinCostFlowCalculator(capacity_matrix, cost_matrix)
     flow_matrix = calculator.flow_matrix
-    matching = BipartiteGraphMatching(len(assignment_matrix))   
-    ...
+    matching = BipartiteGraphMatching(len(assignment_matrix))
+    
+    for executor_index in range(matrix_size):
+        for task_index in range(matrix_size):
+            if flow_matrix[executor_index + 1][matrix_size + 1 + task_index] > 0:
+                matching.add_edge(executor_index, task_index)
 
     return matching
 
