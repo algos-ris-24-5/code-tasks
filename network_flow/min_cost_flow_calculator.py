@@ -72,8 +72,7 @@ class MinCostFlowCalculator(MaxFlowCalculator):
                 if distance[src] + edge_cost < distance[dst]:
                     distance[dst] = distance[src] + edge_cost
                     predecessor[dst] = src
-                    changed_vertex = dst
-        
+                    changed_vertex = dst       
         if changed_vertex == -1:
             return []
 
