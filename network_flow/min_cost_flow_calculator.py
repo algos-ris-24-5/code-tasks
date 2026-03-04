@@ -163,7 +163,7 @@ class MinCostFlowCalculator(MaxFlowCalculator):
 
 
 if __name__ == "__main__":
-    ccapacity_matrix = [
+    capacity_matrix = [
         # s a  b  c  d  t
         [0, 7, 7, 7, 0, 0],  # s
         [0, 0, 0, 6, 9, 0],  # a
