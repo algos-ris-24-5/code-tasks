@@ -25,9 +25,11 @@ class BranchAndBoundSolver(KnapsackAbstractSolver):
         queue = []
 
         largest_bound = self._get_bound(-1, [False]*self.item_cnt, items)
-        heapq.heappush(queue, ((-1)*largest_bound, BranchNode(-1, [False]*self.item_cnt, largest_bound)))
+        heapq.heappush(queue, ((-1)*largest_bound, 1, BranchNode(-1, [False]*self.item_cnt, largest_bound)))
         while (len(queue) > 0):
-            cur_node = heapq.heappop(queue)[1]
+            cur_node = heapq.heappop(queue)[2]
+
+            if cur_node.bound <= max_profit: break
             if cur_node.level == (self.item_cnt - 1): continue
 
             new_taken = cur_node.taken[:]
@@ -37,7 +39,7 @@ class BranchAndBoundSolver(KnapsackAbstractSolver):
                 take_node = BranchNode(cur_node.level + 1, new_taken, self._get_bound(cur_node.level + 1, new_taken, items))
 
                 if take_node.bound > max_profit:
-                    heapq.heappush(queue, ((-1)*take_node.bound, take_node))
+                    heapq.heappush(queue, ((-1)*take_node.bound, (-1)*(cur_node.level + 1), take_node))
 
                 profit = sum([items[i].cost for i in range(cur_node.level+2) if new_taken[i]])
                 if profit > max_profit:
@@ -46,7 +48,7 @@ class BranchAndBoundSolver(KnapsackAbstractSolver):
             
             not_take_node = BranchNode(cur_node.level + 1, cur_node.taken, self._get_bound(cur_node.level + 1, cur_node.taken, items))
             if not_take_node.bound > max_profit:
-                heapq.heappush(queue, ((-1)*not_take_node.bound, not_take_node))
+                heapq.heappush(queue, ((-1)*not_take_node.bound, (-1)*(cur_node.level + 1), not_take_node))
 
         return KnapsackSolution(max_profit, [items[idx].source_idx for idx, item in enumerate(best_items) if item])
 
