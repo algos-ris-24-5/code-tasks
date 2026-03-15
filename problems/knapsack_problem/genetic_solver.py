@@ -64,22 +64,41 @@ class GeneticSolver(KnapsackAbstractSolver):
             solver = BruteForceSolver(self.weights, self.costs, self.weight_limit)
             return solver.get_knapsack()
 
-        best_key = 0
-        best_fitness = 0
+        best_key = None
+        best_fitness = -1
 
         for _ in range(epoch_cnt):
-            items_list = sorted(self.__population.items(), key=lambda x: x[1], reverse=True)
+            items_list = []
+            for key in list(self.__population.keys()):
+                self.__population[key] = self.__get_fit(key)
+                items_list.append((key, self.__population[key]))
 
-            if items_list[0][1] > best_fitness:
-                best_fitness = items_list[0][1]
-                best_key = items_list[0][0]
+            items_list.sort(key=lambda x: x[1], reverse=True)
 
-            elite_count = max(1, self.__population_cnt // 10)
-            new_population = dict(items_list[:elite_count])
+            if not items_list:
+                continue
 
-            strongest = [key for key, _ in items_list[:self.__population_cnt // 2]]
+            current_best_key, current_best_fitness = items_list[0]
+            if current_best_fitness > best_fitness:
+                best_fitness = current_best_fitness
+                best_key = current_best_key
 
-            while len(new_population) < self.__population_cnt:
+            elite_count = max(1, min(self.__population_cnt // 10, len(items_list)))
+            new_population = {}
+            for i in range(elite_count):
+                key, fitness = items_list[i]
+                new_population[key] = fitness
+
+            strongest_count = max(2, min(self.__population_cnt // 2, len(items_list)))
+            strongest = [key for key, _ in items_list[:strongest_count]]
+
+            attempts = 0
+            max_attempts = self.__population_cnt * 3
+
+            while len(new_population) < self.__population_cnt and attempts < max_attempts:
+                if len(strongest) < 2:
+                    break
+
                 parent1 = rnd.choice(strongest)
                 parent2 = rnd.choice(strongest)
 
@@ -104,13 +123,25 @@ class GeneticSolver(KnapsackAbstractSolver):
                         fitness = self.get_cost(selected)
                         if fitness > 0:
                             new_population[child] = fitness
+                attempts += 1
+
+            if len(new_population) < self.__population_cnt:
+                for key, fitness in items_list:
+                    if key not in new_population:
+                        new_population[key] = fitness
+                        if len(new_population) >= self.__population_cnt:
+                            break
 
             self.__population = new_population
 
-        if best_fitness == 0:
-            items_list = sorted(self.__population.items(), key=lambda x: x[1], reverse=True)
-            best_key = items_list[0][0]
-            best_fitness = items_list[0][1]
+        if best_key is None:
+            items_list = list(self.__population.items())
+            if items_list:
+                items_list.sort(key=lambda x: x[1], reverse=True)
+                best_key, best_fitness = items_list[0]
+            else:
+                best_key = 0
+                best_fitness = 0
 
         best_binary = self.__mask.format(best_key)
         best_items = [i for i, bit in enumerate(best_binary) if bit == '1']
@@ -122,7 +153,11 @@ class GeneticSolver(KnapsackAbstractSolver):
         max_attempts = population_cnt * 3
 
         while len(population) < population_cnt and attempts < max_attempts:
-            item = rnd.randint(0, 2**self.item_cnt - 1)
+            item = 0
+            for i in range(self.item_cnt):
+                if rnd.random() < 0.3:
+                    item |= (1 << i)
+
             if item not in population:
                 binary = self.__mask.format(item)
                 selected = [c == '1' for c in binary]
@@ -132,9 +167,14 @@ class GeneticSolver(KnapsackAbstractSolver):
             attempts += 1
 
         if len(population) == 0:
-            population[0] = 0
+            population[0] = self.get_cost([False] * self.item_cnt)
 
         return population
+
+    def __get_fit(self, item: int) -> int:
+        binary = self.__mask.format(item)
+        selected = [c == '1' for c in binary]
+        return self.get_cost(selected)
 
 
 if __name__ == "__main__":
