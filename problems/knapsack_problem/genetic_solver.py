@@ -60,32 +60,43 @@ class GeneticSolver(KnapsackAbstractSolver):
             return solver.get_knapsack()
         
         for _ in range(epoch_cnt):
-            new_population = {}
+            # Обновляем фитнес для всех особей
+            for key in list(self.__population.keys()):
+                self.__population[key] = self.__get_fit(key)
             
-            items_list = list(self.__population.items())
-            items_list.sort(key=lambda x: x[1], reverse=True)
+            # Сортируем по фитнесу
+            items_list = sorted(self.__population.items(), key=lambda x: x[1], reverse=True)
             
+            # Элитизм - сохраняем 10% лучших
             elite_count = max(1, self.__population_cnt // 10)
+            new_population = {}
             for i in range(elite_count):
                 key, fitness = items_list[i]
                 new_population[key] = fitness
             
+            # Выбираем сильнейших особей для скрещивания (50% лучших)
+            strongest = [key for key, _ in items_list[:self.__population_cnt // 2]]
+            
+            # Заполняем остальную часть популяции
             while len(new_population) < self.__population_cnt:
-                parent1 = self.__select_strongest()
-                parent2 = self.__select_strongest()
+                # Выбираем родителей из сильнейших
+                parent1 = rnd.choice(strongest)
+                parent2 = rnd.choice(strongest)
                 
+                # Равномерное скрещивание
                 child1, child2 = self.__cross_items(parent1, parent2)
                 
+                # Мутация
                 child1 = self.__mutation(child1)
                 child2 = self.__mutation(child2)
                 
-                fitness1 = self.__get_fit(child1)
-                fitness2 = self.__get_fit(child2)
-                
-                if fitness1 > 0:
-                    new_population[child1] = fitness1
-                if fitness2 > 0 and len(new_population) < self.__population_cnt:
-                    new_population[child2] = fitness2
+                # Добавляем потомков
+                for child in [child1, child2]:
+                    if len(new_population) < self.__population_cnt:
+                        if child not in new_population:
+                            fitness = self.__get_fit(child)
+                            if fitness > 0:
+                                new_population[child] = fitness
             
             self.__population = new_population
         
@@ -115,6 +126,7 @@ class GeneticSolver(KnapsackAbstractSolver):
         return population
 
     def __cross_items(self, ancestor1: int, ancestor2: int) -> tuple[int, int]:
+        """Равномерное скрещивание."""
         child1 = 0
         child2 = 0
         
@@ -129,7 +141,7 @@ class GeneticSolver(KnapsackAbstractSolver):
         return child1, child2
 
     def __mutation(self, item_set: int) -> int:
-        mutation_rate = 0.1
+        mutation_rate = 0.05
         for i in range(self.item_cnt):
             if rnd.random() < mutation_rate:
                 item_set ^= (1 << i)
@@ -139,23 +151,6 @@ class GeneticSolver(KnapsackAbstractSolver):
         binary = self.__mask.format(item)
         selected = [c == '1' for c in binary]
         return self.get_cost(selected)
-    
-    def __select_strongest(self) -> int:
-        items_list = list(self.__population.items())
-        total_fitness = sum(fitness for _, fitness in items_list)
-        
-        if total_fitness == 0:
-            return rnd.choice(list(self.__population.keys()))
-        
-        threshold = rnd.random() * total_fitness
-        cumulative = 0
-        
-        for key, fitness in items_list:
-            cumulative += fitness
-            if cumulative >= threshold:
-                return key
-        
-        return items_list[-1][0]
 
 
 if __name__ == "__main__":
