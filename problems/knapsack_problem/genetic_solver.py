@@ -60,37 +60,31 @@ class GeneticSolver(KnapsackAbstractSolver):
             return solver.get_knapsack()
         
         for _ in range(epoch_cnt):
-            # Обновляем фитнес для всех особей
             for key in list(self.__population.keys()):
                 self.__population[key] = self.__get_fit(key)
             
-            # Сортируем по фитнесу
             items_list = sorted(self.__population.items(), key=lambda x: x[1], reverse=True)
             
-            # Элитизм - сохраняем 10% лучших
             elite_count = max(1, self.__population_cnt // 10)
             new_population = {}
             for i in range(elite_count):
                 key, fitness = items_list[i]
                 new_population[key] = fitness
             
-            # Выбираем сильнейших особей для скрещивания (50% лучших)
             strongest = [key for key, _ in items_list[:self.__population_cnt // 2]]
             
-            # Заполняем остальную часть популяции
             while len(new_population) < self.__population_cnt:
-                # Выбираем родителей из сильнейших
                 parent1 = rnd.choice(strongest)
                 parent2 = rnd.choice(strongest)
                 
-                # Равномерное скрещивание
+
                 child1, child2 = self.__cross_items(parent1, parent2)
                 
-                # Мутация
+  
                 child1 = self.__mutation(child1)
                 child2 = self.__mutation(child2)
                 
-                # Добавляем потомков
+
                 for child in [child1, child2]:
                     if len(new_population) < self.__population_cnt:
                         if child not in new_population:
