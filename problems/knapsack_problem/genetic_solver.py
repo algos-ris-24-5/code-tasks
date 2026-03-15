@@ -77,21 +77,21 @@ class GeneticSolver(KnapsackAbstractSolver):
             
         pass
 
-    def __generate_population(self, population_cnt: int) -> dict[int:int]:
+    def __generate_population(self, population_cnt: int) -> dict[int:int]: #первая генерация - рандомных напихать, последующие - отбор n первых
         pass
 
-    def __cross_items(self, ancestor1: int, ancestor2: int) -> tuple[int, int]:
+    def __cross_items(self, ancestor1: int, ancestor2: int) -> tuple[int, int]: # скрестить, посчитать фитнес
+        point = random.random
         new_item1 = 1
         new_item2 = 2
         new_fit1, new_fit2 = self.__get_fit(new_item1), self.__get_fit(new_item2)
         self.__population[new_item1] = new_fit1
         self.__population[new_item2] = new_fit2
-       
 
-    def __mutation(self, item_set: int) -> int:
+    def __mutation(self, item_set: int) -> int: #поменять радномную единицу на ноль
         pass
 
-    def __get_fit(self, item):
+    def __get_fit(self, item): # проверить на перевес, посчитать фитнес, добавить в словарь
         pass
     
     def __get_key_by_value(dict, value):
