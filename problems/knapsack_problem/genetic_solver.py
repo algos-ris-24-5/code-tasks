@@ -42,6 +42,8 @@ class GeneticSolver(KnapsackAbstractSolver):
         self.__mask = "{0:0" + str(len(weights)) + "b}"
         self.__population_cnt = min(2**self.item_cnt / 2, POPULATION_LIMIT)
         self.__population = self.__generate_population(self.__population_cnt)
+            
+        self.get_knapsack()
 
     @property
     def population(self) -> list[tuple[str, int]]:
@@ -55,19 +57,47 @@ class GeneticSolver(KnapsackAbstractSolver):
 
     def get_knapsack(self, epoch_cnt=EPOCH_CNT) -> KnapsackSolution:
         """Решает задачу о рюкзаке с использованием генетического алгоритма."""
+        
+        if self.item_cnt <= 5:
+            solver = BruteForceSolver(weights, costs, weight_limit)
+            return solver.get_knapsack()
+        
+        population_number = 1
+        max_population_number = epoch_cnt
+        leader_cnt = 1
+        max_leader_cnt = 5
+        
+        while population_number < max_population_number or leader_cnt < max_leader_cnt:
+            fits = list(self.__population.values())
+            fits = fits.sort(-1)
+            for fit1, fit2 in fits[:self.item_cnt//2]:
+                item1, item2 = self.__get_key_by_value(fit1), self.__get_key_by_value(fit2)
+                self.__cross_items(item1, item2)
+                
+            
         pass
 
     def __generate_population(self, population_cnt: int) -> dict[int:int]:
         pass
 
     def __cross_items(self, ancestor1: int, ancestor2: int) -> tuple[int, int]:
-        pass
+        new_item1 = 1
+        new_item2 = 2
+        new_fit1, new_fit2 = self.__get_fit(new_item1), self.__get_fit(new_item2)
+        self.__population[new_item1] = new_fit1
+        self.__population[new_item2] = new_fit2
+       
 
     def __mutation(self, item_set: int) -> int:
         pass
 
     def __get_fit(self, item):
         pass
+    
+    def __get_key_by_value(dict, value):
+        for key, item in dict.items():
+            if item == value:
+                return key
 
 
 if __name__ == "__main__":
