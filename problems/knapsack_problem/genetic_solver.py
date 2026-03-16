@@ -40,8 +40,16 @@ class GeneticSolver(KnapsackAbstractSolver):
         """
         super().__init__(weights, costs, weight_limit)
         self.__mask = "{0:0" + str(len(weights)) + "b}"
-        self.__population_cnt = min(2**self.item_cnt // 2, POPULATION_LIMIT)
-        self.__population_cnt = max(self.__population_cnt, 10) 
+
+        total_combinations = 2**self.item_cnt
+        if self.item_cnt <= 4:
+            self.__population_cnt = total_combinations
+        else:
+            self.__population_cnt = min(total_combinations // 2, POPULATION_LIMIT)
+        
+        if self.__population_cnt < 2 and total_combinations >= 2:
+            self.__population_cnt = 2
+            
         self.__population = self.__generate_population(self.__population_cnt)
 
     @property
@@ -67,36 +75,53 @@ class GeneticSolver(KnapsackAbstractSolver):
             stagnation_counter = 0
 
             for epoch in range(epoch_cnt):
-                for item_set in list(self.__population.keys()):
-                    self.__population[item_set] = self.__get_fit(item_set)
+                self.__population = {k: v for k, v in self.__population.items() if v > 0}
 
-                if self.__population:
-                    current_leader = max(self.__population, key=self.__population.get)
-                    current_fitness = self.__population[current_leader]
-
-                    if current_fitness > best_cost:
-                        best_cost = current_fitness
-                        best_solution = current_leader
-                        stagnation_counter = 0
-                    else:
-                        stagnation_counter += 1
-
-                    if stagnation_counter >= stagnation_limit:
+                if not self.__population:
+                    self.__population = self.__generate_population(self.__population_cnt)
+                    if not self.__population:
                         break
+                
+                current_leader = max(self.__population, key=self.__population.get)
+                current_fitness = self.__population[current_leader]
+
+                if current_fitness > best_cost:
+                    best_cost = current_fitness
+                    best_solution = current_leader
+                    stagnation_counter = 0
+                else:
+                    stagnation_counter += 1
+
+                if stagnation_counter >= stagnation_limit:
+                    break
 
                 new_population = {}
 
                 sorted_pop = sorted(self.__population.items(), key=lambda x: x[1], reverse=True)
+                
+                valid_elites = []
+                for item_key, item_fit in sorted_pop:
+                    if item_fit > 0:
+                        valid_elites.append((item_key, item_fit))
+                    else:
+                        break
+                
                 elite_count = max(1, len(sorted_pop) // 10)
-                for i in range(min(elite_count, len(sorted_pop))):
-                    new_population[sorted_pop[i][0]] = sorted_pop[i][1]
+                count_to_copy = min(elite_count, len(valid_elites))
+                
+                for i in range(count_to_copy):
+                    new_population[valid_elites[i][0]] = valid_elites[i][1]
 
                 attempts = 0
-                max_attempts = self.__population_cnt * 200 
+                max_attempts = self.__population_cnt * 100 
+
 
                 while len(new_population) < self.__population_cnt and attempts < max_attempts:
                     attempts += 1
-                    
+
+                    if len(self.__population) < 2:
+                        break 
+
                     ancestor1 = self.__select_parent()
                     ancestor2 = self.__select_parent()
 
@@ -106,20 +131,20 @@ class GeneticSolver(KnapsackAbstractSolver):
                     child2 = self.__mutation(child2)
 
                     fit1 = self.__get_fit(child1)
-                    if fit1 > 0 and len(new_population) < self.__population_cnt:
+                    if fit1 > 0 and len(new_population) < self.__population_cnt and child1 not in new_population:
                         new_population[child1] = fit1
-                        continue 
 
                     if len(new_population) < self.__population_cnt:
                         fit2 = self.__get_fit(child2)
-                        if fit2 > 0:
+                        if fit2 > 0 and child2 not in new_population:
                             new_population[child2] = fit2
 
-                min_safe_size = max(5, self.__population_cnt // 4)
+                max_possible = 2**self.item_cnt
+                min_safe_size = min(max(2, self.__population_cnt // 4), max_possible)
                 
                 if len(new_population) < min_safe_size:
                     rescue_attempts = 0
-                    max_rescue_attempts = 1000
+                    max_rescue_attempts = 500
                     
                     while len(new_population) < min_safe_size and rescue_attempts < max_rescue_attempts:
                         rescue_attempts += 1
@@ -128,14 +153,18 @@ class GeneticSolver(KnapsackAbstractSolver):
                         
                         if fit_candidate > 0 and random_candidate not in new_population:
                             new_population[random_candidate] = fit_candidate
+                    
+                    if not new_population and self.__population:
+                        best_prev = max(self.__population, key=self.__population.get)
+                        new_population[best_prev] = self.__population[best_prev]
 
-                    if not new_population:
-                         pass
-
-                self.__population = new_population
+                if new_population:
+                    self.__population = new_population
 
             if best_solution is None and self.__population:
-                best_solution = max(self.__population, key=self.__population.get)
+                valid_final = {k: v for k, v in self.__population.items() if v > 0}
+                if valid_final:
+                    best_solution = max(valid_final, key=valid_final.get)
 
             if best_solution is not None:
                 mask_str = self.__mask.format(best_solution)
@@ -144,8 +173,11 @@ class GeneticSolver(KnapsackAbstractSolver):
                 return KnapsackSolution(cost=cost, items=items)
             else:
                 return KnapsackSolution(cost=0, items=[])
+                
         except Exception as e:
             print(f"Error in get_knapsack: {e}")
+            import traceback
+            traceback.print_exc()
             return KnapsackSolution(cost=0, items=[])
 
     def __generate_population(self, population_cnt: int) -> dict[int, int]:
@@ -161,7 +193,6 @@ class GeneticSolver(KnapsackAbstractSolver):
             if fit > 0 and item_set not in population:
                 population[item_set] = fit
         
-
         while len(population) < population_cnt:
              item_set = rnd.randint(0, max_val - 1)
              if item_set not in population:
@@ -202,9 +233,13 @@ class GeneticSolver(KnapsackAbstractSolver):
 
     def __select_parent(self) -> int:
         tournament_size = 3
+        actual_tournament_size = min(tournament_size, len(self.__population))
+        if actual_tournament_size == 0:
+            raise ValueError("Популяция пуста, невозможно выбрать родителя.")
+            
         candidates = rnd.sample(
             list(self.__population.keys()),
-            min(tournament_size, len(self.__population))
+            actual_tournament_size
         )
         return max(candidates, key=lambda x: self.__population[x])
 
