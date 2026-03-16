@@ -99,7 +99,7 @@ class GeneticSolver(KnapsackAbstractSolver):
         """
         population = {}
         max_items = 2**self.item_cnt
-        max_iterations = 500
+        max_iterations = max_items
 
         current_iteration = 0
         if max_items > POPULATION_LIMIT:
@@ -133,7 +133,8 @@ class GeneticSolver(KnapsackAbstractSolver):
         :return: Новая популяция
         """
         new_population = {}
-        max_iterations = 500
+        max_items = 2**self.item_cnt
+        max_iterations = max_items
 
         for individual in selected:
             fitness = self.__get_fit(individual)
