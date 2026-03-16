@@ -99,17 +99,25 @@ class GeneticSolver(KnapsackAbstractSolver):
         """
         population = {}
         max_items = 2**self.item_cnt
+        max_iterations = 500
 
+        current_iteration = 0
         if max_items > POPULATION_LIMIT:
             while len(population) < population_cnt:
+                current_iteration += 1
+                if max_iterations < current_iteration: break
+
                 individual = rnd.randint(0, max_items - 1)
                 if individual not in population:
                     fitness = self.__get_fit(individual)
-                    population[individual] = fitness
+                    if fitness > 0:
+                        population[individual] = fitness
+                        current_iteration = 0
         else:
             for i in range(max_items):
                 fitness = self.__get_fit(i)
-                population[i] = fitness
+                if fitness > 0:
+                    population[i] = fitness
 
         return population
 
@@ -125,21 +133,30 @@ class GeneticSolver(KnapsackAbstractSolver):
         :return: Новая популяция
         """
         new_population = {}
+        max_iterations = 500
 
         for individual in selected:
             fitness = self.__get_fit(individual)
-            new_population[individual] = fitness
+            if fitness > 0:
+                new_population[individual] = fitness
 
         for individual in offspring:
             if individual not in new_population and len(new_population) < self.__population_cnt:
                 fitness = self.__get_fit(individual)
-                new_population[individual] = fitness
+                if fitness > 0:
+                    new_population[individual] = fitness
 
+        current_iteration = 0
         while len(new_population) < self.__population_cnt:
+            current_iteration += 1
+            if max_iterations < current_iteration: break
+
             individual = rnd.randint(0, 2**self.item_cnt - 1)
             if individual not in new_population:
                 fitness = self.__get_fit(individual)
-                new_population[individual] = fitness
+                if fitness > 0:
+                    new_population[individual] = fitness
+                    current_iteration = 0
 
         return new_population
     
