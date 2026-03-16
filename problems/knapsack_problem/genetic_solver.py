@@ -91,7 +91,12 @@ class GeneticSolver(KnapsackAbstractSolver):
                 for i in range(min(elite_count, len(sorted_pop))):
                     new_population[sorted_pop[i][0]] = sorted_pop[i][1]
 
-                while len(new_population) < self.__population_cnt:
+                attempts = 0
+                max_attempts = self.__population_cnt * 200 
+
+                while len(new_population) < self.__population_cnt and attempts < max_attempts:
+                    attempts += 1
+                    
                     ancestor1 = self.__select_parent()
                     ancestor2 = self.__select_parent()
 
@@ -100,10 +105,32 @@ class GeneticSolver(KnapsackAbstractSolver):
                     child1 = self.__mutation(child1)
                     child2 = self.__mutation(child2)
 
+                    fit1 = self.__get_fit(child1)
+                    if fit1 > 0 and len(new_population) < self.__population_cnt:
+                        new_population[child1] = fit1
+                        continue 
+
                     if len(new_population) < self.__population_cnt:
-                        new_population[child1] = self.__get_fit(child1)
-                    if len(new_population) < self.__population_cnt:
-                        new_population[child2] = self.__get_fit(child2)
+                        fit2 = self.__get_fit(child2)
+                        if fit2 > 0:
+                            new_population[child2] = fit2
+
+                min_safe_size = max(5, self.__population_cnt // 4)
+                
+                if len(new_population) < min_safe_size:
+                    rescue_attempts = 0
+                    max_rescue_attempts = 1000
+                    
+                    while len(new_population) < min_safe_size and rescue_attempts < max_rescue_attempts:
+                        rescue_attempts += 1
+                        random_candidate = rnd.randint(0, 2**self.item_cnt - 1)
+                        fit_candidate = self.__get_fit(random_candidate)
+                        
+                        if fit_candidate > 0 and random_candidate not in new_population:
+                            new_population[random_candidate] = fit_candidate
+
+                    if not new_population:
+                         pass
 
                 self.__population = new_population
 
@@ -124,10 +151,21 @@ class GeneticSolver(KnapsackAbstractSolver):
     def __generate_population(self, population_cnt: int) -> dict[int, int]:
         population = {}
         max_val = 2**self.item_cnt
+        attempts = 0
+        max_attempts = population_cnt * 100
 
-        for _ in range(population_cnt):
+        while len(population) < population_cnt and attempts < max_attempts:
+            attempts += 1
             item_set = rnd.randint(0, max_val - 1)
-            population[item_set] = self.__get_fit(item_set)
+            fit = self.__get_fit(item_set)
+            if fit > 0 and item_set not in population:
+                population[item_set] = fit
+        
+
+        while len(population) < population_cnt:
+             item_set = rnd.randint(0, max_val - 1)
+             if item_set not in population:
+                 population[item_set] = self.__get_fit(item_set)
 
         return population
 
@@ -184,3 +222,9 @@ if __name__ == "__main__":
     print(
         f"Максимальная стоимость: {result.cost}, " f"индексы предметов: {result.items}"
     )
+    
+    if result.items:
+        total_w = sum(weights[i] for i in result.items)
+        print(f"Итоговый вес: {total_w} (Лимит: {weight_limit}) -> {'Валидно' if total_w <= weight_limit else 'Ошибка!'}")
+    else:
+        print("Решение не найдено (пусто).")
