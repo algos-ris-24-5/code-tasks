@@ -54,51 +54,47 @@ class GeneticSolver(KnapsackAbstractSolver):
             population_data.append((self.__mask.format(key), self.__population[key]))
         return population_data
 
-    def get_knapsack(self, epoch_cnt=EPOCH_CNT, stagnation_limit=20) -> KnapsackSolution:
+    def get_knapsack(self, max_gen=EPOCH_CNT, limit=20) -> KnapsackSolution:
         """Решает задачу о рюкзаке с использованием генетического алгоритма."""
         
         if self.item_cnt <= BRUTE_FORCE_BOUND:
-            brute_solver = BruteForceSolver(self._weights, self._costs, self._weight_limit)
-            return brute_solver.get_knapsack()
-
-        best_solution = None
-        best_cost = -1
-        stagnation_counter = 0
-        for epoch in range(epoch_cnt):
-            for item_set in list(self.__population.keys()):
-                self.__population[item_set] = self.__get_fit(item_set)
-            if self.__population:
-                current_leader = max(self.__population, key=self.__population.get)
-                current_fitness = self.__population[current_leader]
-                if current_fitness > best_cost:
-                    best_cost = current_fitness
-                    best_solution = current_leader
-                    stagnation_counter = 0
-                else:
-                    stagnation_counter += 1
-                if stagnation_counter >= stagnation_limit:
-                    break
-            new_population = {}
-            sorted_pop = sorted(self.__population.items(), key=lambda x: x[1], reverse=True)
-            elite_count = max(1, len(sorted_pop) // 10)
-            for i in range(min(elite_count, len(sorted_pop))):
-                new_population[sorted_pop[i][0]] = sorted_pop[i][1]
-            while len(new_population) < self.__population_cnt:
-                ancestor1 = self.__select_parent()
-                ancestor2 = self.__select_parent()
-                child1, child2 = self.__cross_items(ancestor1, ancestor2)
-                child1 = self.__mutation(child1)
-                child2 = self.__mutation(child2)
-                if len(new_population) < self.__population_cnt:
-                    new_population[child1] = self.__get_fit(child1)
-                if len(new_population) < self.__population_cnt:
-                    new_population[child2] = self.__get_fit(child2)
-            self.__population = new_population
-        if best_solution is not None:
-            mask_str = self.__mask.format(best_solution)
-            items = [idx for idx, bit in enumerate(mask_str) if bit == '1']
-            final_cost = self.get_cost([bit == '1' for bit in mask_str])
-            return KnapsackSolution(cost=final_cost, items=items)
+            solver = BruteForceSolver(self._weights, self._costs, self._weight_limit)
+            return solver.get_knapsack()
+        best_val = -1
+        result_dna = None
+        idle_steps = 0
+        for _ in range(max_gen):
+            scored = sorted(
+                [(dna_str, self.__get_fit(int(dna_str, 2))) for dna_str, _ in self.population], key=lambda x: x[1], reverse=True)
+            if not scored:
+                break
+            lead_dna_str, lead_fit = scored[0]
+            if lead_fit > best_val:
+                best_val = lead_fit
+                result_dna = int(lead_dna_str, 2)
+                idle_steps = 0
+            else:
+                idle_steps += 1
+            if idle_steps >= limit:
+                break
+            buffer = {}
+            for dna_str, fit in scored[:max(1, len(scored) // 10)]:
+                buffer[int(dna_str, 2)] = fit
+            while len(buffer) < self.__population_cnt:
+                parent_a = self.__select_parent()
+                parent_b = self.__select_parent()
+                for child in self.__cross_items(parent_a, parent_b):
+                    if len(buffer) >= self.__population_cnt:
+                        break
+                    final_child = self.__mutation(child)
+                    if final_child not in buffer:
+                        buffer[final_child] = self.__get_fit(final_child)
+            self.__population = buffer
+        if result_dna is not None:
+            raw_mask = self.__mask.format(result_dna)
+            indices = [i for i, char in enumerate(raw_mask) if char == '1']
+            actual_cost = self.get_cost([char == '1' for char in raw_mask])
+            return KnapsackSolution(cost=actual_cost, items=indices)
         return KnapsackSolution(cost=0, items=[])
 
     def __generate_population(self, population_cnt: int) -> dict[int, int]:
