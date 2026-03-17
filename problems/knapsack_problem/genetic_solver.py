@@ -74,6 +74,10 @@ class GeneticSolver(KnapsackAbstractSolver):
             leader_fit = self.__population[leader_item]
             old_leader_fit = leader_fit
             
+            item = rnd.randint(1, 2**self.item_cnt - 1)
+            item, fit = self.__get_fit(item)
+            new_population[item] = fit
+            
             for item in sorted_items[:elite_size]:
                 new_population[item] = self.__population[item]
                 
@@ -100,7 +104,7 @@ class GeneticSolver(KnapsackAbstractSolver):
                 if new_fit2 > leader_fit:
                     leader_fit = new_fit2
                     leader_cnt = 0
-                    
+                    leader_item = new_item2
             self.__population = new_population
             population_number+=1
             
@@ -123,7 +127,7 @@ class GeneticSolver(KnapsackAbstractSolver):
         bin_anc1 = self.__get_bin(ancestor1)
         bin_anc2 = self.__get_bin(ancestor2)
         
-        point = rnd.randint(0,self.item_cnt-1)
+        point = rnd.randint(1,self.item_cnt-1)
         
         new_item1 = self.__get_ten(bin_anc1[0:point]+bin_anc2[point:])
         new_item2 = self.__get_ten(bin_anc2[0:point]+bin_anc1[point:])
@@ -160,12 +164,10 @@ class GeneticSolver(KnapsackAbstractSolver):
             if weight <= self.weight_limit:
                 fit = sum(int(bin_item[i]) * self.costs[i] for i in range(self.item_cnt))
                 return item, fit
-
-            item = self.__mutation(item)
+            else:
+                item = self.__mutation(item)
             attempts += 1
-        if weight <= self.weight_limit:
-            fit = sum(int(bin_item[i]) * self.costs[i] for i in range(self.item_cnt))
-            return item, fit
+
         return item, 0
 
     def __get_bin(self, value):
@@ -191,6 +193,10 @@ class GeneticSolver(KnapsackAbstractSolver):
         for _ in range(num_pairs):
             parent1 = self.__tournament_select()
             parent2 = self.__tournament_select()
+            attempts = 0
+            while parent2 == parent1 and attempts < 5:
+                parent2 = self.__tournament_select()
+                attempts += 1
             pairs.append((parent1, parent2))
         return pairs
     
