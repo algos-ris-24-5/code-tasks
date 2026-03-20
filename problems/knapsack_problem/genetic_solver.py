@@ -55,19 +55,102 @@ class GeneticSolver(KnapsackAbstractSolver):
 
     def get_knapsack(self, epoch_cnt=EPOCH_CNT) -> KnapsackSolution:
         """Решает задачу о рюкзаке с использованием генетического алгоритма."""
-        pass
+        if self.item_cnt <= BRUTE_FORCE_BOUND:
+            brute_solver = BruteForceSolver(self.weights, self.costs, self.weight_limit)
+            return brute_solver.get_knapsack()
+
+        for _ in range(epoch_cnt):
+            new_population = {}
+
+            elite_cnt = max(1, int(self.__population_cnt * 0.1))
+            sorted_items = sorted(self.__population.items(), key=lambda x: x[1], reverse=True)
+
+            for i in range(elite_cnt):
+                new_population[sorted_items[i][0]] = sorted_items[i][1]
+
+            keys = list(self.__population.keys())
+
+            while len(new_population) < self.__population_cnt:
+                parent1 = self.__tournament_selection(keys)
+                parent2 = self.__tournament_selection(keys)
+
+                child1, child2 = self.__cross_items(parent1, parent2)
+
+                child1 = self.__mutation(child1)
+                child2 = self.__mutation(child2)
+
+                fit1 = self.__get_fit(child1)
+                fit2 = self.__get_fit(child2)
+
+                new_population[child1] = fit1
+                if len(new_population) < self.__population_cnt:
+                    new_population[child2] = fit2
+
+            self.__population = new_population
+
+        best_individual = max(self.__population.items(), key=lambda x: x[1])
+        best_fit = best_individual[1]
+        best_mask = best_individual[0]
+
+        items_indices = [i for i in range(self.item_cnt) if (best_mask >> i) & 1]
+
+        return KnapsackSolution(cost=best_fit, items=items_indices)
 
     def __generate_population(self, population_cnt: int) -> dict[int:int]:
-        pass
+        population = {}
+        max_value = (1 << self.item_cnt) - 1
+
+        while len(population) < population_cnt:
+            individual = rnd.randint(0, max_value)
+            if individual not in population:
+                population[individual] = self.__get_fit(individual)
+
+        return population
 
     def __cross_items(self, ancestor1: int, ancestor2: int) -> tuple[int, int]:
-        pass
+        point1 = rnd.randint(1, self.item_cnt - 1)
+        point2 = rnd.randint(point1, self.item_cnt - 1)
+
+        mask_right = ((1 << (self.item_cnt - point2)) - 1) << point2
+        mask_middle = ((1 << (point2 - point1)) - 1) << point1
+        mask_left = (1 << point1) - 1
+
+        child1 = (ancestor1 & mask_left) | (ancestor2 & mask_middle) | (ancestor1 & mask_right)
+        child2 = (ancestor2 & mask_left) | (ancestor1 & mask_middle) | (ancestor2 & mask_right)
+
+        return child1, child2
 
     def __mutation(self, item_set: int) -> int:
-        pass
+        mutation_rate = 1.0 / self.item_cnt
+        max_attempts = 3
 
-    def __get_fit(self, item):
-        pass
+        for _ in range(max_attempts):
+            mask = 0
+            for i in range(self.item_cnt):
+                if rnd.random() < mutation_rate:
+                    mask |= (1 << i)
+
+            mutated = item_set ^ mask
+
+            if self.__get_fit(mutated) > 0:
+                return mutated
+
+        return item_set
+
+    def __get_fit(self, item_set: int) -> int:
+        total_weight = 0
+        total_cost = 0
+        for i in range(self.item_cnt):
+            if (item_set >> i) & 1:
+                total_weight += self.weights[i]
+                if total_weight > self.weight_limit:
+                    return 0
+                total_cost += self.costs[i]
+        return total_cost
+
+    def __tournament_selection(self, keys) -> int:
+        candidate1, candidate2 = rnd.sample(keys, 2)
+        return candidate1 if self.__population[candidate1] > self.__population[candidate2] else candidate2
 
 
 if __name__ == "__main__":
