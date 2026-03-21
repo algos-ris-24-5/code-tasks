@@ -66,7 +66,10 @@ class GeneticSolver(KnapsackAbstractSolver):
             sorted_items = sorted(self.__population.items(), key=lambda x: x[1], reverse=True)
 
             for i in range(elite_cnt):
-                new_population[sorted_items[i][0]] = sorted_items[i][1]
+                individual = sorted_items[i][0]
+                fit = self.__get_fit(individual)
+                if fit > 0:
+                    new_population[individual] = fit
 
             keys = list(self.__population.keys())
 
@@ -76,11 +79,15 @@ class GeneticSolver(KnapsackAbstractSolver):
 
                 child1, child2 = self.__cross_items(parent1, parent2)
 
-                child1 = self.__mutation(child1)
-                child2 = self.__mutation(child2)
-
                 fit1 = self.__get_fit(child1)
+                if child1 in new_population or fit1 == 0:
+                    child1 = self.__mutation(child1)
+                    fit1 = self.__get_fit(child1)
+
                 fit2 = self.__get_fit(child2)
+                if child2 in new_population or fit2 == 0:
+                    child2 = self.__mutation(child2)
+                    fit2 = self.__get_fit(child2)
 
                 new_population[child1] = fit1
                 if len(new_population) < self.__population_cnt:
@@ -88,10 +95,17 @@ class GeneticSolver(KnapsackAbstractSolver):
 
             self.__population = new_population
 
-        best_individual = max(self.__population.items(), key=lambda x: x[1])
-        best_fit = best_individual[1]
-        best_mask = best_individual[0]
+        best_individual = None
+        best_fit = -1
+        for individual, fit in self.__population.items():
+            if fit > best_fit:
+                best_fit = fit
+                best_individual = individual
 
+        if best_individual is None:
+            return KnapsackSolution(cost=0, items=[])
+
+        best_mask = best_individual
         items_indices = [i for i in range(self.item_cnt) if (best_mask >> i) & 1]
 
         return KnapsackSolution(cost=best_fit, items=items_indices)
@@ -111,9 +125,9 @@ class GeneticSolver(KnapsackAbstractSolver):
         point1 = rnd.randint(1, self.item_cnt - 1)
         point2 = rnd.randint(point1, self.item_cnt - 1)
 
-        mask_right = ((1 << (self.item_cnt - point2)) - 1) << point2
-        mask_middle = ((1 << (point2 - point1)) - 1) << point1
         mask_left = (1 << point1) - 1
+        mask_middle = ((1 << (point2 - point1)) - 1) << point1
+        mask_right = ((1 << (self.item_cnt - point2)) - 1) << point2
 
         child1 = (ancestor1 & mask_left) | (ancestor2 & mask_middle) | (ancestor1 & mask_right)
         child2 = (ancestor2 & mask_left) | (ancestor1 & mask_middle) | (ancestor2 & mask_right)
@@ -122,7 +136,7 @@ class GeneticSolver(KnapsackAbstractSolver):
 
     def __mutation(self, item_set: int) -> int:
         mutation_rate = 1.0 / self.item_cnt
-        max_attempts = 3
+        max_attempts = 10
 
         for _ in range(max_attempts):
             mask = 0
@@ -132,6 +146,11 @@ class GeneticSolver(KnapsackAbstractSolver):
 
             mutated = item_set ^ mask
 
+            if self.__get_fit(mutated) > 0:
+                return mutated
+
+        for i in range(self.item_cnt):
+            mutated = item_set ^ (1 << i)
             if self.__get_fit(mutated) > 0:
                 return mutated
 
